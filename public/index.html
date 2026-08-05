@@ -160,7 +160,67 @@
     </div>
   </div>
 
-  <!-- 4. JAVASCRIPT KODLARI -->
+  <!-- 4. AİDAT / ÖDEME YÖNETİMİ MODALI -->
+  <div id="paymentModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-[60]">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
+      
+      <!-- Payment Modal Header -->
+      <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+        <h3 id="paymentModalTitle" class="text-base font-bold text-gray-800">Daire Aidat Takibi</h3>
+        <button onclick="closePaymentModal()" class="text-gray-400 hover:text-gray-600 text-lg p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Payment Modal Body -->
+      <div class="p-6 overflow-y-auto flex-1">
+        <input type="hidden" id="activeApartmentId">
+
+        <!-- ➕ AİDAT TAHAKKUK ETTİR / EKLE FORM -->
+        <div class="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 mb-6">
+          <h4 class="text-xs font-bold text-emerald-900 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <i class="fa-solid fa-plus-circle"></i> Yeni Aidat / Borç Ekle
+          </h4>
+          <form onsubmit="handleAddPayment(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <input type="number" step="0.01" id="payAmount" placeholder="Tutar (₺)" required class="px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none shadow-sm">
+            <input type="month" id="payMonth" required class="px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none shadow-sm">
+            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition shadow-sm">
+              Borç Ekle
+            </button>
+          </form>
+        </div>
+
+        <!-- AİDAT GEÇMİŞİ VE ÖDEME DURUMU TABLOSU -->
+        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Aidat / Ödeme Geçmişi</h4>
+        <div class="overflow-x-auto border border-gray-100 rounded-xl">
+          <table class="w-full text-left text-sm text-gray-600">
+            <thead class="bg-gray-50 text-xs uppercase text-gray-400 border-b border-gray-100">
+              <tr>
+                <th class="p-3">Dönem / Ay</th>
+                <th class="p-3">Tutar</th>
+                <th class="p-3">Durum</th>
+                <th class="p-3 text-right">İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="paymentsTableBody" class="divide-y divide-gray-100">
+              <!-- Ödemeler JS ile yüklenecek -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <!-- Payment Modal Footer -->
+      <div class="p-4 bg-gray-50 border-t border-gray-100 text-right">
+        <button onclick="closePaymentModal()" class="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-xl transition">
+          Kapat
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 5. JAVASCRIPT KODLARI -->
   <script>
     let allTenants = [];
     let allApartments = [];
@@ -169,6 +229,11 @@
     // Sayfa Açıldığında Çalışır
     document.addEventListener('DOMContentLoaded', () => {
       loadTenants();
+      // Tarih inputuna bu ayı varsayılan yap
+      const today = new Date();
+      const monthStr = today.toISOString().slice(0, 7);
+      const payMonthInput = document.getElementById('payMonth');
+      if (payMonthInput) payMonthInput.value = monthStr;
     });
 
     // 1. ANA SAYFA: SİTELERİ VE CANLI DAİRE SAYILARINI YÜKLE
@@ -177,7 +242,6 @@
         const res = await fetch('/api/tenants');
         allTenants = await res.json();
 
-        // Her sitenin gerçek daire sayısını backend'den canlı alıyoruz
         for (let tenant of allTenants) {
           try {
             const aptRes = await fetch(`/api/tenants/${tenant.id}/apartments`);
@@ -274,7 +338,7 @@
       renderTenants(filtered);
     }
 
-    // 2. DAİRE VE BORÇ YÖNETİMİ MODALI
+    // 2. DAİRE YÖNETİMİ MODALI
     async function openApartmentModal(tenantId, tenantName) {
       document.getElementById('activeTenantId').value = tenantId;
       document.getElementById('modalTitle').innerText = `${tenantName} - Daireler`;
@@ -293,7 +357,6 @@
       document.getElementById('apartmentModal').classList.add('hidden');
     }
 
-    // Daire Ekleme İşlemi
     async function handleAddApartment(e) {
       e.preventDefault();
       const tenantId = document.getElementById('activeTenantId').value;
@@ -313,14 +376,13 @@
           document.getElementById('newAptResident').value = '';
           document.getElementById('newAptPhone').value = '';
           loadApartments(tenantId);
-          loadTenants(); // Ana sayfadaki daire sayısını güncellemek için
+          loadTenants();
         }
       } catch (err) {
         console.error('Daire eklenirken hata oluştu:', err);
       }
     }
 
-    // Daire Silme İşlemi
     async function deleteApartment(apartmentId) {
       if (!confirm('Bu daireyi silmek istediğinize emin misiniz?')) return;
 
@@ -336,7 +398,6 @@
       }
     }
 
-    // Daireleri Yükle & Borçlarını Hesapla
     async function loadApartments(tenantId) {
       try {
         const res = await fetch(`/api/tenants/${tenantId}/apartments`);
@@ -365,7 +426,6 @@
       }
     }
 
-    // Daireleri Tabloya Yaz
     function renderApartments(apartmentsToRender) {
       const tbody = document.getElementById('apartmentsTableBody');
       if (!tbody) return;
@@ -394,7 +454,7 @@
             </td>
             <td class="p-3">${apt.phone || '-'}</td>
             <td class="p-3">
-              <button onclick="openPaymentModal(${apt.id}, '${apt.apartment_number}')" class="text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 px-2.5 py-1 rounded-full font-medium hover:bg-indigo-100 transition flex items-center gap-1.5">
+              <button onclick="openPaymentModal(${apt.id}, '${apt.apartment_number}')" class="text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 px-2.5 py-1 rounded-full font-medium hover:bg-indigo-100 transition flex items-center gap-1.5 shadow-sm">
                 <i class="fa-solid fa-wallet"></i> Aidat Yönetimi
               </button>
             </td>
@@ -408,7 +468,6 @@
       });
     }
 
-    // Arama ve Borçlu Filtreleme
     function filterApartments() {
       const input = document.getElementById('apartmentSearchInput');
       const query = input ? input.value.toLowerCase().trim() : '';
@@ -430,14 +489,12 @@
       renderApartments(filtered);
     }
 
-    // Borç Filtresi Buton Tıklama
     function toggleDebtFilter() {
       showOnlyDebt = !showOnlyDebt;
       updateDebtFilterBtnStyle();
       filterApartments();
     }
 
-    // Buton Görünüm Güncelleme
     function updateDebtFilterBtnStyle() {
       const btn = document.getElementById('toggleDebtFilterBtn');
       if (!btn) return;
@@ -448,6 +505,114 @@
       } else {
         btn.className = "px-4 py-2.5 bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 border border-gray-200 hover:border-red-200 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 whitespace-nowrap shadow-sm";
         btn.innerHTML = `<i class="fa-solid fa-filter"></i> Sadece Borçlular`;
+      }
+    }
+
+    // 3. AİDAT / ÖDEME YÖNETİMİ MODALI MANTIĞI
+    async function openPaymentModal(apartmentId, apartmentNumber) {
+      document.getElementById('activeApartmentId').value = apartmentId;
+      document.getElementById('paymentModalTitle').innerText = `Daire ${apartmentNumber} - Aidat Yönetimi`;
+      document.getElementById('paymentModal').classList.remove('hidden');
+
+      loadPayments(apartmentId);
+    }
+
+    function closePaymentModal() {
+      document.getElementById('paymentModal').classList.add('hidden');
+    }
+
+    // Daireye ait aidat ödemelerini yükle
+    async function loadPayments(apartmentId) {
+      try {
+        const res = await fetch(`/api/apartments/${apartmentId}/payments`);
+        const payments = await res.json();
+        renderPayments(payments);
+      } catch (err) {
+        console.error('Ödemeler yüklenirken hata:', err);
+      }
+    }
+
+    // Aidat tablosunu doldur
+    function renderPayments(payments) {
+      const tbody = document.getElementById('paymentsTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (payments.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-400">Henüz aidat kaydı bulunmuyor.</td></tr>`;
+        return;
+      }
+
+      payments.forEach(pay => {
+        const isPaid = pay.status === 'Ödendi';
+        const statusBadge = isPaid 
+          ? `<span class="bg-emerald-100 text-emerald-700 text-xs px-2.5 py-1 rounded-full font-semibold">Ödendi</span>`
+          : `<span class="bg-red-100 text-red-700 text-xs px-2.5 py-1 rounded-full font-semibold">Ödenmedi</span>`;
+
+        const toggleBtn = isPaid
+          ? `<button onclick="togglePaymentStatus(${pay.id}, 'Ödenmedi')" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1 rounded-lg transition">İptal Et</button>`
+          : `<button onclick="togglePaymentStatus(${pay.id}, 'Ödendi')" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-lg transition font-medium">Öde</button>`;
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-gray-50">
+            <td class="p-3 font-medium text-gray-800">${pay.month || '-'}</td>
+            <td class="p-3 font-bold text-gray-700">₺${parseFloat(pay.amount || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+            <td class="p-3">${statusBadge}</td>
+            <td class="p-3 text-right">
+              ${toggleBtn}
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    // Yeni Aidat / Borç Ekle
+    async function handleAddPayment(e) {
+      e.preventDefault();
+      const apartmentId = document.getElementById('activeApartmentId').value;
+      const amount = document.getElementById('payAmount').value;
+      const month = document.getElementById('payMonth').value;
+
+      try {
+        const res = await fetch(`/api/apartments/${apartmentId}/payments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount, month, status: 'Ödenmedi' })
+        });
+
+        if (res.ok) {
+          document.getElementById('payAmount').value = '';
+          loadPayments(apartmentId);
+          
+          // Arka plandaki borçları ve üst sayaçları güncelle
+          const tenantId = document.getElementById('activeTenantId').value;
+          if (tenantId) loadApartments(tenantId);
+          loadTenants();
+        }
+      } catch (err) {
+        console.error('Ödeme eklenirken hata:', err);
+      }
+    }
+
+    // Ödendi / Ödenmedi Durumu Değiştirme
+    async function togglePaymentStatus(paymentId, newStatus) {
+      try {
+        const res = await fetch(`/api/payments/${paymentId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus })
+        });
+
+        if (res.ok) {
+          const apartmentId = document.getElementById('activeApartmentId').value;
+          loadPayments(apartmentId);
+
+          const tenantId = document.getElementById('activeTenantId').value;
+          if (tenantId) loadApartments(tenantId);
+          loadTenants();
+        }
+      } catch (err) {
+        console.error('Ödeme durumu değiştirilemedi:', err);
       }
     }
   </script>
