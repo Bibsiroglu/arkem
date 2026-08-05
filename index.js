@@ -36,7 +36,7 @@ const initDb = async () => {
       );
     `);
 
-    // 3. Aidat & Ödemeler Tablosu (YENİ)
+    // 3. Aidat & Ödemeler Tablosu
     await pool.query(`
       CREATE TABLE IF NOT EXISTS payments (
         id SERIAL PRIMARY KEY,
@@ -49,12 +49,36 @@ const initDb = async () => {
       );
     `);
 
-    console.log('⚡ Veritabanı ve "payments" tablosu hazır!');
+    console.log('⚡ Veritabanı ve tüm tablolar hazır!');
   } catch (err) {
     console.error('❌ Veritabanı hatası:', err.message);
   }
 };
 initDb();
+
+/* --- DASHBOARD / İSTATİSTİK ROTALARI (YENİ) --- */
+
+app.get('/api/stats', async (req, res) => {
+  try {
+    const totalTenantsRes = await pool.query('SELECT COUNT(*) FROM tenants');
+    const totalApartmentsRes = await pool.query('SELECT COUNT(*) FROM apartments');
+    const totalCollectedRes = await pool.query(
+      "SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE status = 'Ödendi'"
+    );
+    const totalPendingRes = await pool.query(
+      "SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE status = 'Ödenmedi'"
+    );
+
+    res.json({
+      totalTenants: parseInt(totalTenantsRes.rows[0].count),
+      totalApartments: parseInt(totalApartmentsRes.rows[0].count),
+      totalCollected: parseFloat(totalCollectedRes.rows[0].total),
+      totalPending: parseFloat(totalPendingRes.rows[0].total)
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 /* --- SİTE (TENANTS) ROTALARI --- */
 
@@ -143,7 +167,7 @@ app.delete('/api/apartments/:id', async (req, res) => {
   }
 });
 
-/* --- AİDAT & ÖDEMELER (PAYMENTS) ROTALARI (YENİ) --- */
+/* --- AİDAT & ÖDEMELER (PAYMENTS) ROTALARI --- */
 
 // Bir dairenin ödeme geçmişini getir
 app.get('/api/apartments/:apartmentId/payments', async (req, res) => {
