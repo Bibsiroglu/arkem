@@ -54,6 +54,22 @@ app.get('/api/tenants', async (req, res) => {
   }
 });
 
+// Site Silme Rotası (DELETE)
+app.delete('/api/tenants/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { error } = await supabase
+      .from('tenants')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    res.json({ message: 'Site başarıyla silindi.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Sunucuyu Başlat
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
