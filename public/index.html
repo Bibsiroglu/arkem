@@ -205,138 +205,229 @@
   </div>
 
 
-<script>
-    let allApartments = [];
-    let showOnlyDebt = false;
+  <script>
+      let allTenants = [];
+      let allApartments = [];
+      let showOnlyDebt = false;
 
-    // Modal Açma Fonksiyonu
-    async function openApartmentModal(tenantId, tenantName) {
-      document.getElementById('activeTenantId').value = tenantId;
-      document.getElementById('modalTitle').innerText = `${tenantName} - Daireler`;
-      document.getElementById('apartmentModal').classList.remove('hidden');
-      
-      const aptSearchInput = document.getElementById('apartmentSearchInput');
-      if (aptSearchInput) aptSearchInput.value = '';
-      
-      // Filtreyi sıfırla
-      showOnlyDebt = false;
-      updateDebtFilterBtnStyle();
+      // Sayfa Yüklendiğinde Otomatik Çalışır
+      document.addEventListener('DOMContentLoaded', () => {
+        loadTenants();
+      });
 
-      loadApartments(tenantId);
-    }
-
-    // Daire Verilerini ve Aidat/Borç Durumlarını Çekme
-    async function loadApartments(tenantId) {
-      const res = await fetch(`/api/tenants/${tenantId}/apartments`);
-      allApartments = await res.json();
-
-      // Her daire için ödenmemiş toplam borç tutarını hesapla
-      for (let apt of allApartments) {
+      // 1. ANA SAYFA: SİTELERİ VE İSTATİSTİKLERİ YÜKLE
+      async function loadTenants() {
         try {
-          const payRes = await fetch(`/api/apartments/${apt.id}/payments`);
-          const payments = await payRes.json();
-          
-          // Durumu 'Ödenmedi' olanların tutarlarını topla
-          const totalDebt = payments
-            .filter(p => p.status === 'Ödenmedi')
-            .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-          
-          apt.totalDebt = totalDebt;
-          apt.hasDebt = totalDebt > 0;
-        } catch (e) {
-          apt.totalDebt = 0;
-          apt.hasDebt = false;
+          const res = await fetch('/api/tenants');
+          allTenants = await res.json();
+          renderTenants(allTenants);
+          calculateStats(allTenants);
+        } catch (err) {
+          console.error('Siteler yüklenirken hata oluştu:', err);
         }
       }
 
-      filterApartments();
-    }
+      // Siteleri Ekrana Bas
+      function renderTenants(tenantsToRender) {
+        const container = document.getElementById('tenantsContainer');
+        if (!container) return;
+        container.innerHTML = '';
 
-    // Tabloyu Ekrana Basma
-    function renderApartments(apartmentsToRender) {
-      const tbody = document.getElementById('apartmentsTableBody');
-      tbody.innerHTML = '';
+        if (tenantsToRender.length === 0) {
+          container.innerHTML = `
+            <div class="col-span-full text-center py-12 text-gray-400 bg-white rounded-2xl border border-gray-100">
+              <i class="fa-solid fa-building-circle-xmark text-4xl mb-3 opacity-40"></i>
+              <p>Henüz kayıtlı bir site bulunamadı.</p>
+            </div>`;
+          return;
+        }
 
-      if (apartmentsToRender.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">Aranan kriterlere uygun daire bulunamadı.</td></tr>`;
-        return;
+        tenantsToRender.forEach(tenant => {
+          container.innerHTML += `
+            <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition duration-200">
+              <div class="flex justify-between items-start mb-4">
+                <div>
+                  <h3 class="font-bold text-gray-800 text-lg">${tenant.name}</h3>
+                  <p class="text-gray-400 text-xs mt-1 flex items-center gap-1">
+                    <i class="fa-solid fa-location-dot"></i> ${tenant.address || 'Adres belirtilmedi'}
+                  </p>
+                </div>
+                <span class="bg-indigo-50 text-indigo-600 text-xs px-2.5 py-1 rounded-full font-semibold">
+                  ${tenant.apartment_count || 0} Daire
+                </span>
+              </div>
+              
+              <div class="flex items-center justify-between pt-4 border-t border-gray-50 mt-4">
+                <button onclick="openApartmentModal(${tenant.id}, '${tenant.name}')" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-sm py-2 rounded-xl font-medium transition flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-building"></i> Daireleri Yönet
+                </button>
+              </div>
+            </div>
+          `;
+        });
       }
 
-      apartmentsToRender.forEach(apt => {
-        // Tutar içeren kırmızı uyarı rozeti
-        const debtBadge = apt.hasDebt 
-          ? `<span class="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs px-2.5 py-1 rounded-full font-semibold border border-red-200 shadow-sm">
-               <i class="fa-solid fa-triangle-exclamation"></i> ₺${apt.totalDebt.toLocaleString('tr-TR', {minimumFractionDigits: 2})} Borç
-             </span>`
-          : '';
+      // Üst İstatistik Kartlarını Hesapla
+      async function calculateStats(tenants) {
+        const totalSitesEl = document.getElementById('totalSites');
+        const totalApartmentsEl = document.getElementById('totalApartments');
+        const totalCollectedEl = document.getElementById('totalCollected');
+        const totalPendingEl = document.getElementById('totalPending');
 
-        tbody.innerHTML += `
-          <tr class="hover:bg-gray-50">
-            <td class="p-3 font-semibold text-gray-700">Daire ${apt.apartment_number}</td>
-            <td class="p-3">
-              <div class="flex items-center gap-2">
-                <span>${apt.resident_name || '-'}</span>
-                ${debtBadge}
-              </div>
-            </td>
-            <td class="p-3">${apt.phone || '-'}</td>
-            <td class="p-3">
-              <button onclick="openPaymentModal(${apt.id}, '${apt.apartment_number}')" class="text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 px-2.5 py-1 rounded-full font-medium hover:bg-indigo-100 transition">
-                <i class="fa-solid fa-wallet"></i> Aidat Yönetimi
-              </button>
-            </td>
-            <td class="p-3 text-right">
-              <button onclick="deleteApartment(${apt.id})" class="text-red-500 hover:text-red-700">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            </td>
-          </tr>
-        `;
-      });
-    }
+        if (totalSitesEl) totalSitesEl.innerText = tenants.length;
 
-    // Arama ve Borç Filtresini Birlikte Çalıştıran Fonksiyon
-    function filterApartments() {
-      const input = document.getElementById('apartmentSearchInput');
-      const query = input ? input.value.toLowerCase().trim() : '';
+        let apartmentSum = 0;
+        tenants.forEach(t => apartmentSum += (parseInt(t.apartment_count) || 0));
+        if (totalApartmentsEl) totalApartmentsEl.innerText = apartmentSum;
 
-      const filtered = allApartments.filter(apt => {
-        const aptNoMatch = apt.apartment_number ? apt.apartment_number.toString().toLowerCase().includes(query) : false;
-        const residentMatch = apt.resident_name ? apt.resident_name.toLowerCase().includes(query) : false;
-        const phoneMatch = apt.phone ? apt.phone.toLowerCase().includes(query) : false;
+        try {
+          const res = await fetch('/api/payments/stats');
+          if (res.ok) {
+            const stats = await res.json();
+            if (totalCollectedEl) totalCollectedEl.innerText = `₺${(stats.collected || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
+            if (totalPendingEl) totalPendingEl.innerText = `₺${(stats.pending || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
+          }
+        } catch (e) {
+          console.error('İstatistik çekme hatası:', e);
+        }
+      }
+
+      // Ana Sayfa Site Arama Fonksiyonu
+      function filterTenants() {
+        const query = document.getElementById('searchInput')?.value.toLowerCase().trim() || '';
+        const filtered = allTenants.filter(t => 
+          t.name.toLowerCase().includes(query) || 
+          (t.address && t.address.toLowerCase().includes(query))
+        );
+        renderTenants(filtered);
+      }
+
+
+      // 2. DAİRE VE BORÇ YÖNETİMİ MODALI (YENİ EKLENEN KISIM)
+      async function openApartmentModal(tenantId, tenantName) {
+        document.getElementById('activeTenantId').value = tenantId;
+        document.getElementById('modalTitle').innerText = `${tenantName} - Daireler`;
+        document.getElementById('apartmentModal').classList.remove('hidden');
         
-        const searchMatches = aptNoMatch || residentMatch || phoneMatch;
+        const aptSearchInput = document.getElementById('apartmentSearchInput');
+        if (aptSearchInput) aptSearchInput.value = '';
+        
+        showOnlyDebt = false;
+        updateDebtFilterBtnStyle();
+
+        loadApartments(tenantId);
+      }
+
+      async function loadApartments(tenantId) {
+        try {
+          const res = await fetch(`/api/tenants/${tenantId}/apartments`);
+          allApartments = await res.json();
+
+          for (let apt of allApartments) {
+            try {
+              const payRes = await fetch(`/api/apartments/${apt.id}/payments`);
+              const payments = await payRes.json();
+              
+              const totalDebt = payments
+                .filter(p => p.status === 'Ödenmedi')
+                .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+              
+              apt.totalDebt = totalDebt;
+              apt.hasDebt = totalDebt > 0;
+            } catch (e) {
+              apt.totalDebt = 0;
+              apt.hasDebt = false;
+            }
+          }
+
+          filterApartments();
+        } catch (err) {
+          console.error('Daireler yüklenirken hata:', err);
+        }
+      }
+
+      function renderApartments(apartmentsToRender) {
+        const tbody = document.getElementById('apartmentsTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        if (apartmentsToRender.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">Aranan kriterlere uygun daire bulunamadı.</td></tr>`;
+          return;
+        }
+
+        apartmentsToRender.forEach(apt => {
+          const debtBadge = apt.hasDebt 
+            ? `<span class="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs px-2.5 py-1 rounded-full font-semibold border border-red-200 shadow-sm">
+                <i class="fa-solid fa-triangle-exclamation"></i> ₺${apt.totalDebt.toLocaleString('tr-TR', {minimumFractionDigits: 2})} Borç
+              </span>`
+            : '';
+
+          tbody.innerHTML += `
+            <tr class="hover:bg-gray-50">
+              <td class="p-3 font-semibold text-gray-700">Daire ${apt.apartment_number}</td>
+              <td class="p-3">
+                <div class="flex items-center gap-2">
+                  <span>${apt.resident_name || '-'}</span>
+                  ${debtBadge}
+                </div>
+              </td>
+              <td class="p-3">${apt.phone || '-'}</td>
+              <td class="p-3">
+                <button onclick="openPaymentModal(${apt.id}, '${apt.apartment_number}')" class="text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 px-2.5 py-1 rounded-full font-medium hover:bg-indigo-100 transition">
+                  <i class="fa-solid fa-wallet"></i> Aidat Yönetimi
+                </button>
+              </td>
+              <td class="p-3 text-right">
+                <button onclick="deleteApartment(${apt.id})" class="text-red-500 hover:text-red-700">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+      }
+
+      function filterApartments() {
+        const input = document.getElementById('apartmentSearchInput');
+        const query = input ? input.value.toLowerCase().trim() : '';
+
+        const filtered = allApartments.filter(apt => {
+          const aptNoMatch = apt.apartment_number ? apt.apartment_number.toString().toLowerCase().includes(query) : false;
+          const residentMatch = apt.resident_name ? apt.resident_name.toLowerCase().includes(query) : false;
+          const phoneMatch = apt.phone ? apt.phone.toLowerCase().includes(query) : false;
+          
+          const searchMatches = aptNoMatch || residentMatch || phoneMatch;
+
+          if (showOnlyDebt) {
+            return searchMatches && apt.hasDebt;
+          }
+
+          return searchMatches;
+        });
+
+        renderApartments(filtered);
+      }
+
+      function toggleDebtFilter() {
+        showOnlyDebt = !showOnlyDebt;
+        updateDebtFilterBtnStyle();
+        filterApartments();
+      }
+
+      function updateDebtFilterBtnStyle() {
+        const btn = document.getElementById('toggleDebtFilterBtn');
+        if (!btn) return;
 
         if (showOnlyDebt) {
-          return searchMatches && apt.hasDebt;
+          btn.className = "px-4 py-2.5 bg-red-600 text-white border border-red-600 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 whitespace-nowrap shadow-sm";
+          btn.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Tüm Daireleri Göster`;
+        } else {
+          btn.className = "px-4 py-2.5 bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 border border-gray-200 hover:border-red-200 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 whitespace-nowrap shadow-sm";
+          btn.innerHTML = `<i class="fa-solid fa-filter"></i> Sadece Borçlular`;
         }
-
-        return searchMatches;
-      });
-
-      renderApartments(filtered);
-    }
-
-    // Sadece Borçlular Filtre Butonu Aç/Kapat
-    function toggleDebtFilter() {
-      showOnlyDebt = !showOnlyDebt;
-      updateDebtFilterBtnStyle();
-      filterApartments();
-    }
-
-    // Filtre Butonunun Görünümünü Güncelleme
-    function updateDebtFilterBtnStyle() {
-      const btn = document.getElementById('toggleDebtFilterBtn');
-      if (!btn) return;
-
-      if (showOnlyDebt) {
-        btn.className = "px-4 py-2.5 bg-red-600 text-white border border-red-600 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 whitespace-nowrap shadow-sm";
-        btn.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Tüm Daireleri Göster`;
-      } else {
-        btn.className = "px-4 py-2.5 bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 border border-gray-200 hover:border-red-200 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 whitespace-nowrap shadow-sm";
-        btn.innerHTML = `<i class="fa-solid fa-filter"></i> Sadece Borçlular`;
       }
-    }
-</script>
+  </script>
+
 </body>
 </html>
