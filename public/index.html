@@ -107,14 +107,22 @@
     async function deleteTenant(id) {
       if(!confirm('Bu siteyi silmek istediğinize emin misiniz?')) return;
 
-      await fetch(`${API_URL}/${id}`, {
-        method: 'DELETE'
-      });
+      try {
+        const res = await fetch(`${API_URL}/${id}`, {
+          method: 'DELETE'
+        });
 
-      fetchTenants(); // Listeyi güncelle
+        if (!res.ok) {
+          const errData = await res.json();
+          alert('Silme hatası: ' + (errData.error || 'Bilinmeyen hata'));
+          return;
+        }
+
+        fetchTenants(); // Başarılıysa listeyi yenile
+      } catch (err) {
+        console.error('Ağ hatası:', err);
+      }
     }
-
-    fetchTenants();
   </script>
 </body>
 </html>

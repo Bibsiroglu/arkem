@@ -57,15 +57,24 @@ app.get('/api/tenants', async (req, res) => {
 // Site Silme Rotası (DELETE)
 app.delete('/api/tenants/:id', async (req, res) => {
   const { id } = req.params;
+  
   try {
-    const { error } = await supabase
+    // ID değerini sayıya çeviriyoruz (Supabase int4 bekliyor)
+    const tenantId = parseInt(id, 10);
+
+    const { data, error } = await supabase
       .from('tenants')
       .delete()
-      .eq('id', id);
+      .eq('id', tenantId);
 
-    if (error) throw error;
-    res.json({ message: 'Site başarıyla silindi.' });
+    if (error) {
+      console.error('Supabase Silme Hatası:', error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json({ message: 'Site başarıyla silindi.', data });
   } catch (err) {
+    console.error('Sunucu Hatası:', err);
     res.status(500).json({ error: err.message });
   }
 });
