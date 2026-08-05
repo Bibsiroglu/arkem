@@ -318,6 +318,19 @@
     async function loadApartments(tenantId) {
       const res = await fetch(`/api/tenants/${tenantId}/apartments`);
       allApartments = await res.json();
+
+      // Her daire için aidat/borç durumunu kontrol et
+      for (let apt of allApartments) {
+        try {
+          const payRes = await fetch(`/api/apartments/${apt.id}/payments`);
+          const payments = await payRes.json();
+          // Durumu 'Ödenmedi' olan en az 1 kayıt varsa borcu var sayılır
+          apt.hasDebt = payments.some(p => p.status === 'Ödenmedi');
+        } catch (e) {
+          apt.hasDebt = false;
+        }
+      }
+
       renderApartments(allApartments);
     }
 
@@ -331,13 +344,25 @@
       }
 
       apartmentsToRender.forEach(apt => {
+        // Borcu varsa kırmızı etiket oluştur
+        const debtBadge = apt.hasDebt 
+          ? `<span class="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-semibold border border-red-200 shadow-sm">
+               <i class="fa-solid fa-triangle-exclamation"></i> Borç Var
+             </span>`
+          : '';
+
         tbody.innerHTML += `
           <tr class="hover:bg-gray-50">
             <td class="p-3 font-semibold text-gray-700">Daire ${apt.apartment_number}</td>
-            <td class="p-3">${apt.resident_name || '-'}</td>
+            <td class="p-3">
+              <div class="flex items-center gap-2">
+                <span>${apt.resident_name || '-'}</span>
+                ${debtBadge}
+              </div>
+            </td>
             <td class="p-3">${apt.phone || '-'}</td>
             <td class="p-3">
-              <button onclick="openPaymentModal(${apt.id}, '${apt.apartment_number}')" class="text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 px-2.5 py-1 rounded-full font-medium hover:bg-indigo-100">
+              <button onclick="openPaymentModal(${apt.id}, '${apt.apartment_number}')" class="text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 px-2.5 py-1 rounded-full font-medium hover:bg-indigo-100 transition">
                 <i class="fa-solid fa-wallet"></i> Aidat Yönetimi
               </button>
             </td>
@@ -350,7 +375,6 @@
         `;
       });
     }
-
     function filterApartments() {
       const input = document.getElementById('apartmentSearchInput');
       if (!input) return;
