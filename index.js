@@ -4,6 +4,7 @@ const { Pool } = require('pg');
 
 const app = express();
 app.use(express.json());
+app.use(express.static('public'));
 
 // Supabase Veritabanı Bağlantısı
 const pool = new Pool({
