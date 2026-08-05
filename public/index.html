@@ -46,12 +46,26 @@
       </div>
     </div>
 
-    <!-- Siteler Listesi -->
-    <div class="flex justify-between items-center mb-4">
+    <!-- Siteler Başlık ve Arama Çubuğu -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
       <h2 class="text-xl font-bold text-gray-700">Kayıtlı Siteler</h2>
-      <button onclick="loadDashboard()" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
-        <i class="fa-solid fa-rotate"></i> Yenile
-      </button>
+      
+      <div class="flex items-center gap-3 w-full sm:w-auto">
+        <!-- Canlı Arama Inputu -->
+        <div class="relative w-full sm:w-64">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+          <input 
+            type="text" 
+            id="tenantSearchInput" 
+            oninput="filterTenants()" 
+            placeholder="Site adı veya adres ara..." 
+            class="w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white shadow-sm"
+          >
+        </div>
+        <button onclick="loadDashboard()" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium whitespace-nowrap">
+          <i class="fa-solid fa-rotate"></i> Yenile
+        </button>
+      </div>
     </div>
 
     <div id="tenantsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -79,7 +93,16 @@
       </form>
     </div>
   </div>
-
+<!-- Daire Modal İçinde Arama Çubuğu -->
+  <div class="relative mb-4">
+    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+    <input 
+      type="text" 
+      id="apartmentSearchInput" 
+      oninput="filterApartments()" 
+      placeholder="Daire no, sakin adı veya telefon ara..." 
+      class="w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+  </div>
   <!-- DAİRELER VE AİDAT DETAY MODAL -->
   <div id="apartmentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full p-6 max-h-[90vh] flex flex-col">
@@ -170,6 +193,10 @@
 
   <!-- JAVASCRIPT MANTIĞI -->
   <script>
+    // Global Veri Hafızası (State) - Anlık filtreleme için verileri saklar
+    let allTenants = [];
+    let allApartments = [];
+
     document.addEventListener('DOMContentLoaded', () => {
       loadDashboard();
     });
@@ -177,6 +204,10 @@
     // --- DASHBOARD & SİTELERİ YÜKLE ---
     async function loadDashboard() {
       try {
+        // Arama inputunu temizle (varsa)
+        const tenantSearchInput = document.getElementById('tenantSearchInput');
+        if (tenantSearchInput) tenantSearchInput.value = '';
+
         // Stats
         const statsRes = await fetch('/api/stats');
         const stats = await statsRes.json();
@@ -186,39 +217,60 @@
         document.getElementById('statCollected').innerText = `₺${stats.totalCollected.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
         document.getElementById('statPending').innerText = `₺${stats.totalPending.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
 
-        // Tenants List
+        // Tenants Listesini Çek ve Global Değişkene At
         const tenantsRes = await fetch('/api/tenants');
-        const tenants = await tenantsRes.json();
+        allTenants = await tenantsRes.json();
         
-        const tenantsList = document.getElementById('tenantsList');
-        tenantsList.innerHTML = '';
-
-        if (tenants.length === 0) {
-          tenantsList.innerHTML = `<div class="col-span-full text-center py-8 text-gray-500">Henüz hiç site eklenmemiş.</div>`;
-          return;
-        }
-
-        tenants.forEach(tenant => {
-          tenantsList.innerHTML += `
-            <div class="bg-white rounded-xl p-5 shadow-md hover:shadow-lg transition border border-gray-100 flex flex-col justify-between">
-              <div>
-                <h3 class="font-bold text-lg text-gray-800 mb-1">${tenant.name}</h3>
-                <p class="text-xs text-gray-500 mb-4">${tenant.address || 'Adres belirtilmemiş'}</p>
-              </div>
-              <div class="flex justify-between items-center pt-3 border-t">
-                <button onclick="openApartmentModal(${tenant.id}, '${tenant.name}')" class="text-indigo-600 hover:text-indigo-800 text-sm font-semibold flex items-center gap-1">
-                  Daireler & Detay <i class="fa-solid fa-arrow-right text-xs"></i>
-                </button>
-                <button onclick="deleteTenant(${tenant.id})" class="text-red-500 hover:text-red-700 text-sm">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </div>
-            </div>
-          `;
-        });
+        // Ekrana Çiz
+        renderTenants(allTenants);
       } catch (err) {
         console.error('Yükleme hatası:', err);
       }
+    }
+
+    // Siteleri Ekrana Basan Render Fonksiyonu
+    function renderTenants(tenantsToRender) {
+      const tenantsList = document.getElementById('tenantsList');
+      tenantsList.innerHTML = '';
+
+      if (tenantsToRender.length === 0) {
+        tenantsList.innerHTML = `<div class="col-span-full text-center py-8 text-gray-500">Aranan kriterlere uygun site bulunamadı.</div>`;
+        return;
+      }
+
+      tenantsToRender.forEach(tenant => {
+        tenantsList.innerHTML += `
+          <div class="bg-white rounded-xl p-5 shadow-md hover:shadow-lg transition border border-gray-100 flex flex-col justify-between">
+            <div>
+              <h3 class="font-bold text-lg text-gray-800 mb-1">${tenant.name}</h3>
+              <p class="text-xs text-gray-500 mb-4">${tenant.address || 'Adres belirtilmemiş'}</p>
+            </div>
+            <div class="flex justify-between items-center pt-3 border-t">
+              <button onclick="openApartmentModal(${tenant.id}, '${tenant.name}')" class="text-indigo-600 hover:text-indigo-800 text-sm font-semibold flex items-center gap-1">
+                Daireler & Detay <i class="fa-solid fa-arrow-right text-xs"></i>
+              </button>
+              <button onclick="deleteTenant(${tenant.id})" class="text-red-500 hover:text-red-700 text-sm">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // Canlı Site Arama Filtresi
+    function filterTenants() {
+      const input = document.getElementById('tenantSearchInput');
+      if (!input) return;
+      
+      const query = input.value.toLowerCase().trim();
+      const filtered = allTenants.filter(tenant => {
+        const nameMatch = tenant.name ? tenant.name.toLowerCase().includes(query) : false;
+        const addressMatch = tenant.address ? tenant.address.toLowerCase().includes(query) : false;
+        return nameMatch || addressMatch;
+      });
+
+      renderTenants(filtered);
     }
 
     // --- SİTE EKLEME / SİLME ---
@@ -247,11 +299,16 @@
       loadDashboard();
     }
 
-    // --- DAİRELERİ YÜKLEME ---
+    // --- DAİRELERİ YÜKLEME & FİLTRELEME ---
     async function openApartmentModal(tenantId, tenantName) {
       document.getElementById('activeTenantId').value = tenantId;
       document.getElementById('modalTitle').innerText = `${tenantName} - Daireler`;
       document.getElementById('apartmentModal').classList.remove('hidden');
+      
+      // Arama girdisini temizle
+      const aptSearchInput = document.getElementById('apartmentSearchInput');
+      if (aptSearchInput) aptSearchInput.value = '';
+
       loadApartments(tenantId);
     }
 
@@ -261,16 +318,21 @@
 
     async function loadApartments(tenantId) {
       const res = await fetch(`/api/tenants/${tenantId}/apartments`);
-      const apartments = await res.json();
+      allApartments = await res.json(); // Daireleri global array'e at
+      renderApartments(allApartments);
+    }
+
+    // Daireleri Ekrana Basan Render Fonksiyonu
+    function renderApartments(apartmentsToRender) {
       const tbody = document.getElementById('apartmentsTableBody');
       tbody.innerHTML = '';
 
-      if (apartments.length === 0) {
+      if (apartmentsToRender.length === 0) {
         tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">Daire bulunamadı.</td></tr>`;
         return;
       }
 
-      for (const apt of apartments) {
+      apartmentsToRender.forEach(apt => {
         tbody.innerHTML += `
           <tr class="hover:bg-gray-50">
             <td class="p-3 font-semibold text-gray-700">Daire ${apt.apartment_number}</td>
@@ -288,7 +350,24 @@
             </td>
           </tr>
         `;
-      }
+      });
+    }
+
+    // Canlı Daire / Sakin Arama Filtresi
+    function filterApartments() {
+      const input = document.getElementById('apartmentSearchInput');
+      if (!input) return;
+
+      const query = input.value.toLowerCase().trim();
+      const filtered = allApartments.filter(apt => {
+        const aptNoMatch = apt.apartment_number ? apt.apartment_number.toString().toLowerCase().includes(query) : false;
+        const residentMatch = apt.resident_name ? apt.resident_name.toLowerCase().includes(query) : false;
+        const phoneMatch = apt.phone ? apt.phone.toLowerCase().includes(query) : false;
+        
+        return aptNoMatch || residentMatch || phoneMatch;
+      });
+
+      renderApartments(filtered);
     }
 
     async function handleAddApartment(e) {
@@ -393,7 +472,7 @@
       loadDashboard();
     }
 
-    // --- CSV / EXCEL DIŞA AKTAR (EXPORTS TO CSV) ---
+    // --- CSV / EXCEL DIŞA AKTAR ---
     async function exportToCSV() {
       const tenantId = document.getElementById('activeTenantId').value;
       const modalTitle = document.getElementById('modalTitle').innerText;
@@ -444,6 +523,6 @@
         alert('Excel dosyası oluşturulurken bir hata oluştu.');
       }
     }
-  </script>
+</script>
 </body>
 </html>
