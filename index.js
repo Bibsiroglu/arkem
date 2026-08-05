@@ -54,27 +54,23 @@ app.get('/api/tenants', async (req, res) => {
   }
 });
 
-// Site Silme Rotası (DELETE)
+// 3. API: Site Sil (DELETE) - PostgreSQL SQL Sorgusu ile
 app.delete('/api/tenants/:id', async (req, res) => {
   const { id } = req.params;
   
   try {
-    // ID değerini sayıya çeviriyoruz (Supabase int4 bekliyor)
-    const tenantId = parseInt(id, 10);
+    const result = await pool.query(
+      'DELETE FROM tenants WHERE id = $1 RETURNING *',
+      [id]
+    );
 
-    const { data, error } = await supabase
-      .from('tenants')
-      .delete()
-      .eq('id', tenantId);
-
-    if (error) {
-      console.error('Supabase Silme Hatası:', error);
-      return res.status(500).json({ error: error.message });
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Silinecek kayıt bulunamadı.' });
     }
 
-    res.json({ message: 'Site başarıyla silindi.', data });
+    res.json({ message: 'Site başarıyla silindi.', deletedTenant: result.rows[0] });
   } catch (err) {
-    console.error('Sunucu Hatası:', err);
+    console.error('Silme Hatası:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
