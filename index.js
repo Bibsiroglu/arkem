@@ -1,17 +1,24 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const { Pool } = require('pg');
 
 const app = express();
+
+// Middleware
+app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// Veritabanı Bağlantısı
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: process.env.DATABASE_URL?.includes('localhost') 
+    ? false 
+    : { rejectUnauthorized: false }
 });
 
-// Veritabanı Tablolarını Başlat
+// Veritabanı Tablolarını ve İndeksleri Başlat
 const initDb = async () => {
   try {
     // 1. Siteler Tablosu
@@ -41,42 +48,51 @@ const initDb = async () => {
       CREATE TABLE IF NOT EXISTS payments (
         id SERIAL PRIMARY KEY,
         apartment_id INT REFERENCES apartments(id) ON DELETE CASCADE,
-        period VARCHAR(50) NOT NULL, -- Örn: "Ağustos 2026"
-        amount NUMERIC(10, 2) NOT NULL, -- Örn: 750.00
-        status VARCHAR(20) DEFAULT 'Ödenmedi', -- 'Ödendi' veya 'Ödenmedi'
+        period VARCHAR(50) NOT NULL,
+        amount NUMERIC(10, 2) NOT NULL,
+        status VARCHAR(20) DEFAULT 'Ödenmedi',
         payment_date DATE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
-    console.log('⚡ Veritabanı ve tüm tablolar hazır!');
+    // Performans için İndeksler
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_apartments_tenant ON apartments(tenant_id);
+      CREATE INDEX IF NOT EXISTS idx_payments_apartment ON payments(apartment_id);
+    `);
+
+    console.log('⚡ Veritabanı, tablolar ve indeksler hazır!');
   } catch (err) {
-    console.error('❌ Veritabanı hatası:', err.message);
+    console.error('❌ Veritabanı başlatma hatası:', err.message);
   }
 };
 initDb();
 
-/* --- DASHBOARD / İSTATİSTİK ROTALARI (YENİ) --- */
+/* --- DASHBOARD / İSTATİSTİK (TEK SORGU OPTİMİZASYONU) --- */
 
 app.get('/api/stats', async (req, res) => {
   try {
-    const totalTenantsRes = await pool.query('SELECT COUNT(*) FROM tenants');
-    const totalApartmentsRes = await pool.query('SELECT COUNT(*) FROM apartments');
-    const totalCollectedRes = await pool.query(
-      "SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE status = 'Ödendi'"
-    );
-    const totalPendingRes = await pool.query(
-      "SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE status = 'Ödenmedi'"
-    );
+    // 4 farklı sorgu yerine tek bir SQL ile tüm istatistikleri çekiyoruz
+    const statsQuery = `
+      SELECT 
+        (SELECT COUNT(*) FROM tenants) AS total_tenants,
+        (SELECT COUNT(*) FROM apartments) AS total_apartments,
+        (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE status = 'Ödendi') AS total_collected,
+        (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE status = 'Ödenmedi') AS total_pending
+    `;
+    const result = await pool.query(statsQuery);
+    const row = result.rows[0];
 
     res.json({
-      totalTenants: parseInt(totalTenantsRes.rows[0].count),
-      totalApartments: parseInt(totalApartmentsRes.rows[0].count),
-      totalCollected: parseFloat(totalCollectedRes.rows[0].total),
-      totalPending: parseFloat(totalPendingRes.rows[0].total)
+      totalTenants: parseInt(row.total_tenants, 10),
+      totalApartments: parseInt(row.total_apartments, 10),
+      totalCollected: parseFloat(row.total_collected),
+      totalPending: parseFloat(row.total_pending)
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Stats Hatası:', err);
+    res.status(500).json({ error: 'İstatistikler alınırken bir hata oluştu.' });
   }
 });
 
@@ -94,6 +110,8 @@ app.get('/api/tenants', async (req, res) => {
 app.post('/api/tenants', async (req, res) => {
   try {
     const { name, address } = req.body;
+    if (!name) return res.status(400).json({ error: 'Site adı zorunludur.' });
+
     const result = await pool.query(
       'INSERT INTO tenants (name, address) VALUES ($1, $2) RETURNING *',
       [name, address]
@@ -112,6 +130,7 @@ app.put('/api/tenants/:id', async (req, res) => {
       'UPDATE tenants SET name = $1, address = $2 WHERE id = $3 RETURNING *',
       [name, address, id]
     );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Site bulunamadı.' });
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -121,8 +140,9 @@ app.put('/api/tenants/:id', async (req, res) => {
 app.delete('/api/tenants/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await pool.query('DELETE FROM tenants WHERE id = $1', [id]);
-    res.json({ message: 'Site silindi.' });
+    const result = await pool.query('DELETE FROM tenants WHERE id = $1 RETURNING *', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Site bulunamadı.' });
+    res.json({ message: 'Site ve bağlı tüm veriler silindi.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -146,6 +166,9 @@ app.get('/api/tenants/:tenantId/apartments', async (req, res) => {
 app.post('/api/tenants/:tenantId/apartments', async (req, res) => {
   const { tenantId } = req.params;
   const { apartment_number, resident_name, phone } = req.body;
+
+  if (!apartment_number) return res.status(400).json({ error: 'Daire numarası zorunludur.' });
+
   try {
     const result = await pool.query(
       'INSERT INTO apartments (tenant_id, apartment_number, resident_name, phone) VALUES ($1, $2, $3, $4) RETURNING *',
@@ -157,11 +180,28 @@ app.post('/api/tenants/:tenantId/apartments', async (req, res) => {
   }
 });
 
+// Daire Bilgilerini Güncelleme (Yeni Eklendi)
+app.put('/api/apartments/:id', async (req, res) => {
+  const { id } = req.params;
+  const { apartment_number, resident_name, phone } = req.body;
+  try {
+    const result = await pool.query(
+      'UPDATE apartments SET apartment_number = $1, resident_name = $2, phone = $3 WHERE id = $4 RETURNING *',
+      [apartment_number, resident_name, phone, id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Daire bulunamadı.' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.delete('/api/apartments/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await pool.query('DELETE FROM apartments WHERE id = $1', [id]);
-    res.json({ message: 'Daire silindi.' });
+    const result = await pool.query('DELETE FROM apartments WHERE id = $1 RETURNING *', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Daire bulunamadı.' });
+    res.json({ message: 'Daire ve aidat geçmişi silindi.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -169,7 +209,6 @@ app.delete('/api/apartments/:id', async (req, res) => {
 
 /* --- AİDAT & ÖDEMELER (PAYMENTS) ROTALARI --- */
 
-// Bir dairenin ödeme geçmişini getir
 app.get('/api/apartments/:apartmentId/payments', async (req, res) => {
   const { apartmentId } = req.params;
   try {
@@ -183,15 +222,21 @@ app.get('/api/apartments/:apartmentId/payments', async (req, res) => {
   }
 });
 
-// Daireye Aidat / Borç Tanımla
 app.post('/api/apartments/:apartmentId/payments', async (req, res) => {
   const { apartmentId } = req.params;
   const { period, amount, status } = req.body;
+
+  if (!period || !amount) {
+    return res.status(400).json({ error: 'Dönem ve Tutar alanları zorunludur.' });
+  }
+
   try {
-    const paymentDate = status === 'Ödendi' ? new Date() : null;
+    const paymentStatus = status || 'Ödenmedi';
+    const paymentDate = paymentStatus === 'Ödendi' ? new Date() : null;
+
     const result = await pool.query(
       'INSERT INTO payments (apartment_id, period, amount, status, payment_date) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [apartmentId, period, amount, status || 'Ödenmedi', paymentDate]
+      [apartmentId, period, amount, paymentStatus, paymentDate]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -199,12 +244,11 @@ app.post('/api/apartments/:apartmentId/payments', async (req, res) => {
   }
 });
 
-// Ödeme Durumunu Değiştir (Ödendi / Ödenmedi Yap)
 app.put('/api/payments/:id/toggle', async (req, res) => {
   const { id } = req.params;
   try {
     const current = await pool.query('SELECT status FROM payments WHERE id = $1', [id]);
-    if (current.rows.length === 0) return res.status(404).json({ error: 'Kayıt bulunamadı' });
+    if (current.rows.length === 0) return res.status(404).json({ error: 'Ödeme kaydı bulunamadı' });
 
     const newStatus = current.rows[0].status === 'Ödendi' ? 'Ödenmedi' : 'Ödendi';
     const paymentDate = newStatus === 'Ödendi' ? new Date() : null;
@@ -219,18 +263,19 @@ app.put('/api/payments/:id/toggle', async (req, res) => {
   }
 });
 
-// Ödeme Kaydını Sil
 app.delete('/api/payments/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await pool.query('DELETE FROM payments WHERE id = $1', [id]);
+    const result = await pool.query('DELETE FROM payments WHERE id = $1 RETURNING *', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Ödeme kaydı bulunamadı.' });
     res.json({ message: 'Ödeme kaydı silindi.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+// Port Dinleme
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Sunucu http://localhost:${PORT} adresinde yayında!`);
+  console.log(`🚀 Sunucu http://localhost:${PORT} adresinde aktif!`);
 });
