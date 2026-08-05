@@ -75,6 +75,28 @@ app.delete('/api/tenants/:id', async (req, res) => {
   }
 });
 
+// 4. API: Site Bilgilerini Güncelle (PUT)
+app.put('/api/tenants/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, address } = req.body;
+
+  try {
+    const result = await pool.query(
+      'UPDATE tenants SET name = $1, address = $2 WHERE id = $3 RETURNING *',
+      [name, address, id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Güncellenecek kayıt bulunamadı.' });
+    }
+
+    res.json({ message: 'Site başarıyla güncellendi.', tenant: result.rows[0] });
+  } catch (err) {
+    console.error('Güncelleme Hatası:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Sunucuyu Başlat
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
