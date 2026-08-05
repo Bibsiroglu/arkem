@@ -3,55 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Site & Emlak Yönetim Paneli</title>
+  <title>Emlak & Site Yönetimi</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome İkonları -->
+  <!-- FontAwesome İkon Seti -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-100 font-sans text-gray-800">
+<body class="bg-gray-100 min-h-screen text-gray-800 font-sans">
 
-  <!-- Navbar -->
-  <nav class="bg-indigo-600 text-white shadow-lg">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-      <h1 class="text-xl font-bold flex items-center gap-2">
+  <!-- HEADER / ÜST BAR -->
+  <header class="bg-indigo-600 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold flex items-center gap-2">
         <i class="fa-solid fa-building"></i> Emlak & Site Yönetimi
       </h1>
-      <button onclick="openTenantModal()" class="bg-indigo-800 hover:bg-indigo-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
+      <button onclick="openTenantModal()" class="bg-indigo-800 hover:bg-indigo-900 text-white px-4 py-2 rounded-lg font-medium text-sm transition shadow flex items-center gap-2">
         <i class="fa-solid fa-plus"></i> Yeni Site Ekle
       </button>
     </div>
-  </nav>
+  </header>
 
-  <!-- Ana İçerik Container -->
-  <main class="max-w-7xl mx-auto px-4 py-8">
+  <!-- ANA İÇERİK CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-    <!-- Dashboard / İstatistik Kartları -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-      <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-indigo-500">
-        <p class="text-sm text-gray-500 uppercase font-semibold">Toplam Site</p>
-        <h3 id="statTenants" class="text-3xl font-bold text-gray-800 mt-2">0</h3>
+    <!-- STATS (ÖZET KARTLARI) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-indigo-500">
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Toplam Site</p>
+        <h3 id="statTenants" class="text-3xl font-extrabold text-gray-800 mt-2">0</h3>
       </div>
-      <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500">
-        <p class="text-sm text-gray-500 uppercase font-semibold">Toplam Daire</p>
-        <h3 id="statApartments" class="text-3xl font-bold text-gray-800 mt-2">0</h3>
+      <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Toplam Daire</p>
+        <h3 id="statApartments" class="text-3xl font-extrabold text-gray-800 mt-2">0</h3>
       </div>
-      <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500">
-        <p class="text-sm text-gray-500 uppercase font-semibold">Tahsil Edilen Aidat</p>
-        <h3 id="statCollected" class="text-3xl font-bold text-green-600 mt-2">₺0.00</h3>
+      <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-emerald-500">
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tahsil Edilen Aidat</p>
+        <h3 id="statCollected" class="text-3xl font-extrabold text-emerald-600 mt-2">₺0,00</h3>
       </div>
-      <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-red-500">
-        <p class="text-sm text-gray-500 uppercase font-semibold">Bekleyen Ödeme</p>
-        <h3 id="statPending" class="text-3xl font-bold text-red-600 mt-2">₺0.00</h3>
+      <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-rose-500">
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Bekleyen Ödeme</p>
+        <h3 id="statPending" class="text-3xl font-extrabold text-rose-600 mt-2">₺0,00</h3>
       </div>
     </div>
 
-    <!-- Siteler Başlık ve Arama Çubuğu -->
+    <!-- SİTELER BAŞLIK VE CANLI ARAMA ÇUBUĞU -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
       <h2 class="text-xl font-bold text-gray-700">Kayıtlı Siteler</h2>
       
       <div class="flex items-center gap-3 w-full sm:w-auto">
-        <!-- Canlı Arama Inputu -->
+        <!-- Site Arama Inputu -->
         <div class="relative w-full sm:w-64">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
           <input 
@@ -62,136 +62,140 @@
             class="w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white shadow-sm"
           >
         </div>
-        <button onclick="loadDashboard()" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium whitespace-nowrap">
+        <button onclick="loadDashboard()" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium whitespace-nowrap flex items-center gap-1">
           <i class="fa-solid fa-rotate"></i> Yenile
         </button>
       </div>
     </div>
 
+    <!-- SİTELER KART LİSTESİ -->
     <div id="tenantsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- JavaScript ile Siteler Kart Olarak Buraya Yüklenecek -->
+      <!-- JavaScript dinamik olarak doldurur -->
     </div>
+
   </main>
 
-  <!-- SİTE EKLEME MODAL -->
+
+  <!-- ==================== MODALS (AÇILIR PENCERELER) ==================== -->
+
+  <!-- 1. YENİ SİTE EKLEME MODALI -->
   <div id="tenantModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-      <h3 class="text-lg font-bold mb-4">Yeni Site Ekle</h3>
-      <form id="tenantForm" onsubmit="handleSaveTenant(event)">
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Site / Apt Adı</label>
-          <input type="text" id="tenantName" required placeholder="Örn: Güneş Sitesi" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold text-gray-800">Yeni Site Ekle</h3>
+        <button onclick="closeTenantModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+      </div>
+      <form id="tenantForm" onsubmit="handleSaveTenant(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Site Adı</label>
+          <input type="text" id="tenantName" required placeholder="Örn: Güneş Sitesi" class="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Adres</label>
-          <textarea id="tenantAddress" rows="3" placeholder="Açık adres..." class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Adres</label>
+          <textarea id="tenantAddress" placeholder="Örn: Merkez/Kastamonu" rows="3" class="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
         </div>
-        <div class="flex justify-end gap-2">
-          <button type="button" onclick="closeTenantModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">İptal</button>
-          <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Kaydet</button>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeTenantModal()" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">İptal</button>
+          <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium">Kaydet</button>
         </div>
       </form>
     </div>
   </div>
-<!-- Daire Modal İçinde Arama Çubuğu -->
-  <div class="relative mb-4">
-    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-    <input 
-      type="text" 
-      id="apartmentSearchInput" 
-      oninput="filterApartments()" 
-      placeholder="Daire no, sakin adı veya telefon ara..." 
-      class="w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-  </div>
-  <!-- DAİRELER VE AİDAT DETAY MODAL -->
+
+
+  <!-- 2. DAİRELER MODALI -->
   <div id="apartmentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full p-6 max-h-[90vh] flex flex-col">
-      <div class="flex justify-between items-center border-b pb-4 mb-4">
-        <div>
-          <h3 id="modalTitle" class="text-xl font-bold text-gray-800">Site Detayları</h3>
-          <input type="hidden" id="activeTenantId">
-        </div>
-        <div class="flex gap-2">
-          <button onclick="exportToCSV()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
-            <i class="fa-solid fa-file-excel"></i> Excel İndir
+    <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 relative shadow-2xl">
+      
+      <input type="hidden" id="activeTenantId">
+
+      <!-- Modal Başlık, CSV İndir ve Kapat Butonu -->
+      <div class="flex justify-between items-center mb-6 border-b pb-4">
+        <h3 id="modalTitle" class="text-xl font-bold text-gray-800">Daireler</h3>
+        <div class="flex items-center gap-3">
+          <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5 shadow-sm">
+            <i class="fa-solid fa-file-excel"></i> Excel (CSV) İndir
           </button>
-          <button onclick="closeApartmentModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+          <button onclick="closeApartmentModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none px-2">&times;</button>
         </div>
       </div>
 
-      <!-- Yeni Daire Ekleme Formu -->
-      <form id="apartmentForm" onsubmit="handleAddApartment(event)" class="bg-gray-50 p-4 rounded-lg mb-4 grid grid-cols-1 md:grid-cols-4 gap-3">
-        <input type="text" id="aptNo" placeholder="Daire No *" required class="border px-3 py-2 rounded-lg outline-none">
-        <input type="text" id="aptResident" placeholder="Sakin Adı" class="border px-3 py-2 rounded-lg outline-none">
-        <input type="text" id="aptPhone" placeholder="Telefon" class="border px-3 py-2 rounded-lg outline-none">
-        <button type="submit" class="bg-indigo-600 text-white rounded-lg px-4 py-2 font-medium hover:bg-indigo-700">Daire Ekle</button>
-      </form>
-
-      <!-- Daireler Tablosu -->
-      <div class="overflow-y-auto flex-1">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-gray-100 text-gray-600 text-xs font-semibold uppercase">
-              <th class="p-3">Daire No</th>
-              <th class="p-3">Sakin</th>
-              <th class="p-3">Telefon</th>
-              <th class="p-3">Son Aidat Durumu</th>
-              <th class="p-3 text-right">İşlemler</th>
-            </tr>
-          </thead>
-          <tbody id="apartmentsTableBody" class="divide-y text-sm">
-            <!-- Daireler JS ile Buraya Gelecek -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- AİDAT / BORÇ YÖNETİMİ MODAL -->
-  <div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
-      <div class="flex justify-between items-center border-b pb-3 mb-4">
-        <h3 id="paymentModalTitle" class="text-lg font-bold">Daire Aidat Yönetimi</h3>
-        <button onclick="closePaymentModal()" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+      <!-- DAİRE ARAMA ÇUBUĞU -->
+      <div class="relative mb-6">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        <input 
+          type="text" 
+          id="apartmentSearchInput" 
+          oninput="filterApartments()" 
+          placeholder="Daire no, sakin adı veya telefon ara..." 
+          class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none shadow-sm transition"
+        >
       </div>
 
-      <input type="hidden" id="activeApartmentId">
-
-      <!-- Yeni Aidat Ekleme Formu -->
-      <form id="paymentForm" onsubmit="handleAddPayment(event)" class="space-y-3 mb-6">
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Dönem (Örn: Ağustos 2026)</label>
-          <input type="text" id="payPeriod" placeholder="Ağustos 2026" required class="w-full border px-3 py-2 rounded-lg outline-none text-sm">
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Tutar (TL)</label>
-            <input type="number" step="0.01" id="payAmount" placeholder="750.00" required class="w-full border px-3 py-2 rounded-lg outline-none text-sm">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Durum</label>
-            <select id="payStatus" class="w-full border px-3 py-2 rounded-lg outline-none text-sm">
-              <option value="Ödenmedi">Ödenmedi</option>
-              <option value="Ödendi">Ödendi</option>
-            </select>
-          </div>
-        </div>
-        <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium text-sm hover:bg-indigo-700">
-          Borç / Aidat Ekle
+      <!-- YENİ DAİRE EKLE FORM -->
+      <form id="apartmentForm" onsubmit="handleAddApartment(event)" class="bg-gray-50 p-4 rounded-xl mb-6 grid grid-cols-1 sm:grid-cols-4 gap-3 border border-gray-100">
+        <input type="text" id="aptNo" placeholder="Daire No (Örn: 5)" required class="p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+        <input type="text" id="aptResident" placeholder="Sakin Adı Soyadı" class="p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+        <input type="text" id="aptPhone" placeholder="Telefon" class="p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg text-sm transition shadow-sm flex items-center justify-center gap-1">
+          <i class="fa-solid fa-plus"></i> Daire Ekle
         </button>
       </form>
 
-      <!-- Geçmiş Aidat Geçmişi -->
-      <h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Aidat Geçmişi</h4>
-      <div class="max-h-48 overflow-y-auto border rounded-lg divide-y">
-        <ul id="paymentsList" class="divide-y text-sm">
-          <!-- JS ile Yüklenecek -->
-        </ul>
+      <!-- DAİRELER TABLOSU -->
+      <div class="overflow-x-auto border rounded-xl">
+        <table class="w-full text-left text-sm text-gray-600">
+          <thead class="bg-gray-100 text-gray-700 font-semibold border-b">
+            <tr>
+              <th class="p-3">Daire No</th>
+              <th class="p-3">Sakin Adı</th>
+              <th class="p-3">Telefon</th>
+              <th class="p-3">Aidat Durumu</th>
+              <th class="p-3 text-right">İşlem</th>
+            </tr>
+          </thead>
+          <tbody id="apartmentsTableBody" class="divide-y divide-gray-100 bg-white">
+            <!-- JavaScript dinamik dolduracak -->
+          </tbody>
+        </table>
       </div>
+
     </div>
   </div>
 
-  <!-- JAVASCRIPT MANTIĞI -->
+
+  <!-- 3. AİDAT / PAYMENTS MODALI -->
+  <div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
+      <input type="hidden" id="activeApartmentId">
+      
+      <div class="flex justify-between items-center mb-4 border-b pb-3">
+        <h3 id="paymentModalTitle" class="text-lg font-bold text-gray-800">Aidat Yönetimi</h3>
+        <button onclick="closePaymentModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <!-- YENİ AİDAT EKLE FORM -->
+      <form id="paymentForm" onsubmit="handleAddPayment(event)" class="bg-gray-50 p-4 rounded-xl mb-4 grid grid-cols-1 sm:grid-cols-3 gap-2 border border-gray-100">
+        <input type="text" id="payPeriod" placeholder="Dönem (Ocak 2026)" required class="p-2 border rounded text-xs outline-none bg-white">
+        <input type="number" step="0.01" id="payAmount" placeholder="Tutar (TL)" required class="p-2 border rounded text-xs outline-none bg-white">
+        <select id="payStatus" class="p-2 border rounded text-xs outline-none bg-white">
+          <option value="Ödenmedi">Ödenmedi</option>
+          <option value="Ödendi">Ödendi</option>
+        </select>
+        <button type="submit" class="sm:col-span-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 rounded text-xs transition mt-1">
+          + Aidat Kaydı Ekle
+        </button>
+      </form>
+
+      <!-- AİDAT GEÇMİŞİ LİSTESİ -->
+      <ul id="paymentsList" class="divide-y divide-gray-100 border rounded-xl max-h-60 overflow-y-auto">
+        <!-- JavaScript doldurur -->
+      </ul>
+    </div>
+  </div>
+
+
+  <!-- ==================== JAVASCRIPT MANTIĞI ==================== -->
   <script>
     // Global Veri Hafızası (State) - Anlık filtreleme için verileri saklar
     let allTenants = [];
@@ -204,11 +208,10 @@
     // --- DASHBOARD & SİTELERİ YÜKLE ---
     async function loadDashboard() {
       try {
-        // Arama inputunu temizle (varsa)
         const tenantSearchInput = document.getElementById('tenantSearchInput');
         if (tenantSearchInput) tenantSearchInput.value = '';
 
-        // Stats
+        // Özet İstatistikler
         const statsRes = await fetch('/api/stats');
         const stats = await statsRes.json();
         
@@ -217,18 +220,16 @@
         document.getElementById('statCollected').innerText = `₺${stats.totalCollected.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
         document.getElementById('statPending').innerText = `₺${stats.totalPending.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
 
-        // Tenants Listesini Çek ve Global Değişkene At
+        // Siteler Listesini Çek ve Hafızaya Al
         const tenantsRes = await fetch('/api/tenants');
         allTenants = await tenantsRes.json();
         
-        // Ekrana Çiz
         renderTenants(allTenants);
       } catch (err) {
         console.error('Yükleme hatası:', err);
       }
     }
 
-    // Siteleri Ekrana Basan Render Fonksiyonu
     function renderTenants(tenantsToRender) {
       const tenantsList = document.getElementById('tenantsList');
       tenantsList.innerHTML = '';
@@ -258,7 +259,6 @@
       });
     }
 
-    // Canlı Site Arama Filtresi
     function filterTenants() {
       const input = document.getElementById('tenantSearchInput');
       if (!input) return;
@@ -305,7 +305,6 @@
       document.getElementById('modalTitle').innerText = `${tenantName} - Daireler`;
       document.getElementById('apartmentModal').classList.remove('hidden');
       
-      // Arama girdisini temizle
       const aptSearchInput = document.getElementById('apartmentSearchInput');
       if (aptSearchInput) aptSearchInput.value = '';
 
@@ -318,11 +317,10 @@
 
     async function loadApartments(tenantId) {
       const res = await fetch(`/api/tenants/${tenantId}/apartments`);
-      allApartments = await res.json(); // Daireleri global array'e at
+      allApartments = await res.json();
       renderApartments(allApartments);
     }
 
-    // Daireleri Ekrana Basan Render Fonksiyonu
     function renderApartments(apartmentsToRender) {
       const tbody = document.getElementById('apartmentsTableBody');
       tbody.innerHTML = '';
@@ -353,7 +351,6 @@
       });
     }
 
-    // Canlı Daire / Sakin Arama Filtresi
     function filterApartments() {
       const input = document.getElementById('apartmentSearchInput');
       if (!input) return;
@@ -523,6 +520,6 @@
         alert('Excel dosyası oluşturulurken bir hata oluştu.');
       }
     }
-</script>
+  </script>
 </body>
 </html>
