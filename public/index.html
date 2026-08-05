@@ -14,25 +14,21 @@
     .form-group { margin-bottom: 15px; }
     label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
     input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
-    .btn-add { width: 100%; background: #2563eb; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-    .btn-add:hover { background: #1d4ed8; }
+    button { width: 100%; background: #2563eb; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    button:hover { background: #1d4ed8; }
 
     /* Liste Alanı */
     .tenant-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 15px; }
-    .tenant-card { background: white; border-radius: 8px; border-left: 4px solid #2563eb; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
-    .tenant-info h3 { font-size: 16px; color: #0f172a; margin-bottom: 5px; }
-    .tenant-info p { font-size: 13px; color: #64748b; }
-    
-    /* Sil Butonu */
-    .btn-delete { background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-    .btn-delete:hover { background: #dc2626; }
+    .tenant-card { background: white; border-radius: 8px; border-left: 4px solid #2563eb; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .tenant-card h3 { font-size: 16px; color: #0f172a; margin-bottom: 5px; }
+    .tenant-card p { font-size: 13px; color: #64748b; }
   </style>
 </head>
 <body>
 
   <h1>🏢 Arkem Site Yönetimi</h1>
 
-  <!-- Form -->
+  <!-- Yeni Kayıt Formu -->
   <div class="card">
     <div class="form-group">
       <label for="name">Site / Yönetim Adı</label>
@@ -42,7 +38,7 @@
       <label for="address">Adres / Konum</label>
       <input type="text" id="address" placeholder="Örn: Kastamonu / Merkez">
     </div>
-    <button class="btn-add" onclick="addTenant()">Kaydet ve Ekle</button>
+    <button onclick="addTenant()">Kaydet ve Ekle</button>
   </div>
 
   <!-- Kayıtlı Siteler -->
@@ -53,9 +49,10 @@
   </div>
 
   <script>
+    // Canlıdaki veya localdeki API adresiniz
     const API_URL = window.location.origin + '/api/tenants';
 
-    // Listeleme (GET)
+    // Siteleri Listele (GET)
     async function fetchTenants() {
       try {
         const res = await fetch(API_URL);
@@ -72,11 +69,8 @@
         data.forEach(tenant => {
           listDiv.innerHTML += `
             <div class="tenant-card">
-              <div class="tenant-info">
-                <h3>${tenant.name}</h3>
-                <p>📍 ${tenant.address || 'Adres Belirtilmemiş'}</p>
-              </div>
-              <button class="btn-delete" onclick="deleteTenant(${tenant.id})">Sil</button>
+              <h3>${tenant.name}</h3>
+              <p>📍 ${tenant.address || 'Adres Belirtilmemiş'}</p>
             </div>
           `;
         });
@@ -85,7 +79,7 @@
       }
     }
 
-    // Ekleme (POST)
+    // Yeni Site Ekle (POST)
     async function addTenant() {
       const name = document.getElementById('name').value;
       const address = document.getElementById('address').value;
@@ -100,10 +94,8 @@
 
       document.getElementById('name').value = '';
       document.getElementById('address').value = '';
-      fetchTenants();
-    }
 
-    // Silme (DELETE)
+    // Site Silme (DELETE)  
     async function deleteTenant(id) {
       if(!confirm('Bu siteyi silmek istediğinize emin misiniz?')) return;
 
@@ -123,6 +115,12 @@
         console.error('Ağ hatası:', err);
       }
     }
+      // Listeyi Yenile
+      fetchTenants();
+    }
+
+    // Sayfa açıldığında verileri çek
+    fetchTenants();
   </script>
 </body>
 </html>
