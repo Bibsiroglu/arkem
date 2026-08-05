@@ -6,39 +6,43 @@
   <title>Arkem - Yönetim Paneli</title>
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
-    body { background-color: #f4f6f9; color: #333; padding: 20px; max-width: 800px; margin: 0 auto; }
+    body { background-color: #f4f6f9; color: #333; padding: 20px; max-width: 900px; margin: 0 auto; }
     h1 { color: #1e293b; margin-bottom: 20px; text-align: center; }
     
-    /* Form Alanı */
     .card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; }
     .form-group { margin-bottom: 15px; }
     label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
     input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
     
     .btn-container { display: flex; gap: 10px; }
-    .btn-add { flex: 1; background: #2563eb; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-    .btn-add:hover { background: #1d4ed8; }
+    .btn-add { flex: 1; background: #2563eb; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
     .btn-cancel { background: #64748b; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; display: none; }
 
-    /* Liste Alanı */
-    .tenant-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 15px; }
-    .tenant-card { background: white; border-radius: 8px; border-left: 4px solid #2563eb; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
-    .tenant-info h3 { font-size: 16px; color: #0f172a; margin-bottom: 5px; }
+    .tenant-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+    .tenant-card { background: white; border-radius: 8px; border-left: 4px solid #2563eb; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; gap: 10px; }
+    .tenant-info h3 { font-size: 16px; color: #0f172a; }
     .tenant-info p { font-size: 13px; color: #64748b; }
     
-    /* Buton Grubu */
     .action-btns { display: flex; gap: 6px; }
+    .btn-view { background: #10b981; color: white; border: none; padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
     .btn-edit { background: #f59e0b; color: white; border: none; padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
-    .btn-edit:hover { background: #d97706; }
     .btn-delete { background: #ef4444; color: white; border: none; padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
-    .btn-delete:hover { background: #dc2626; }
+
+    /* Modal (Daireler Açılır Pencere) */
+    .modal-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+    .modal { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b; }
+    
+    .apt-list { margin-top: 15px; }
+    .apt-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #e2e8f0; }
   </style>
 </head>
 <body>
 
   <h1>🏢 Arkem Site Yönetimi</h1>
 
-  <!-- Kayıt / Düzenleme Formu -->
+  <!-- Kayıt Formu -->
   <div class="card">
     <h2 id="formTitle" style="font-size: 16px; margin-bottom: 15px;">Yeni Site Ekle</h2>
     <input type="hidden" id="editTenantId">
@@ -58,17 +62,40 @@
     </div>
   </div>
 
-  <!-- Kayıtlı Siteler -->
   <h2>Kayıtlı Siteler</h2>
   <br>
   <div id="tenantList" class="tenant-grid">
     <p>Yükleniyor...</p>
   </div>
 
+  <!-- Daire Yönetimi Modalı -->
+  <div id="aptModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Daireler</h3>
+        <button class="close-btn" onclick="closeModal()">✖</button>
+      </div>
+
+      <!-- Yeni Daire Ekleme Formu -->
+      <div style="background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+        <h4 style="font-size: 13px; margin-bottom: 8px;">Yeni Daire / Sakin Ekle</h4>
+        <input type="hidden" id="activeTenantId">
+        <input type="text" id="aptNo" placeholder="Daire No (Örn: D3)" style="margin-bottom: 8px;">
+        <input type="text" id="residentName" placeholder="Sakin Adı Soyadı" style="margin-bottom: 8px;">
+        <input type="text" id="phone" placeholder="Telefon" style="margin-bottom: 8px;">
+        <button class="btn-add" style="padding: 8px; font-size: 13px;" onclick="addApartment()">Daireyi Kaydet</button>
+      </div>
+
+      <!-- Daire Listesi -->
+      <div id="aptList" class="apt-list">
+        <p>Yükleniyor...</p>
+      </div>
+    </div>
+  </div>
+
   <script>
     const API_URL = window.location.origin + '/api/tenants';
 
-    // Siteleri Listele (GET)
     async function fetchTenants() {
       try {
         const res = await fetch(API_URL);
@@ -83,7 +110,6 @@
         }
 
         data.forEach(tenant => {
-          // İsmi ve adresi tırnak işaretleri hatalarına karşı kaçış yapıyoruz
           const safeName = tenant.name.replace(/'/g, "\\'");
           const safeAddress = (tenant.address || '').replace(/'/g, "\\'");
 
@@ -94,6 +120,7 @@
                 <p>📍 ${tenant.address || 'Adres Belirtilmemiş'}</p>
               </div>
               <div class="action-btns">
+                <button class="btn-view" onclick="openAptModal(${tenant.id}, '${safeName}')">🏠 Daireler</button>
                 <button class="btn-edit" onclick="startEdit(${tenant.id}, '${safeName}', '${safeAddress}')">Düzenle</button>
                 <button class="btn-delete" onclick="deleteTenant(${tenant.id})">Sil</button>
               </div>
@@ -105,7 +132,6 @@
       }
     }
 
-    // Ekleme veya Güncelleme İşlemi
     async function saveTenant() {
       const editId = document.getElementById('editTenantId').value;
       const name = document.getElementById('name').value;
@@ -114,14 +140,12 @@
       if(!name) return alert('Lütfen site adını girin!');
 
       if (editId) {
-        // Güncelleme (PUT)
         await fetch(`${API_URL}/${editId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, address })
         });
       } else {
-        // Yeni Kayıt (POST)
         await fetch(API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -133,49 +157,94 @@
       fetchTenants();
     }
 
-    // Düzenleme Modunu Başlat
     function startEdit(id, name, address) {
       document.getElementById('editTenantId').value = id;
       document.getElementById('name').value = name;
       document.getElementById('address').value = address;
-
       document.getElementById('formTitle').innerText = 'Site Bilgilerini Düzenle';
       document.getElementById('submitBtn').innerText = 'Güncelle ve Kaydet';
       document.getElementById('cancelBtn').style.display = 'block';
-
-      window.scrollTo({ top: 0, behavior: 'smooth' }); // Form alanına kaydır
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // Formu Sıfırla
     function resetForm() {
       document.getElementById('editTenantId').value = '';
       document.getElementById('name').value = '';
       document.getElementById('address').value = '';
-
       document.getElementById('formTitle').innerText = 'Yeni Site Ekle';
       document.getElementById('submitBtn').innerText = 'Kaydet ve Ekle';
       document.getElementById('cancelBtn').style.display = 'none';
     }
 
-    // Site Sil (DELETE)
     async function deleteTenant(id) {
-      if(!confirm('Bu siteyi silmek istediğinize emin misiniz?')) return;
+      if(!confirm('Bu siteyi ve ona ait tüm daireleri silmek istediğinize emin misiniz?')) return;
+      await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+      fetchTenants();
+    }
 
-      try {
-        const res = await fetch(`${API_URL}/${id}`, {
-          method: 'DELETE'
-        });
+    /* --- DAİRE YÖNETİMİ FONKSİYONLARI --- */
 
-        if (!res.ok) {
-          const errData = await res.json();
-          alert('Silme hatası: ' + (errData.error || 'Bilinmeyen hata'));
-          return;
-        }
+    async function openAptModal(tenantId, tenantName) {
+      document.getElementById('activeTenantId').value = tenantId;
+      document.getElementById('modalTitle').innerText = `${tenantName} - Daireler`;
+      document.getElementById('aptModal').style.display = 'flex';
+      fetchApartments(tenantId);
+    }
 
-        fetchTenants();
-      } catch (err) {
-        console.error('Ağ hatası:', err);
+    function closeModal() {
+      document.getElementById('aptModal').style.display = 'none';
+    }
+
+    async function fetchApartments(tenantId) {
+      const res = await fetch(`${API_URL}/${tenantId}/apartments`);
+      const data = await res.json();
+      const listDiv = document.getElementById('aptList');
+      listDiv.innerHTML = '';
+
+      if(data.length === 0) {
+        listDiv.innerHTML = '<p style="font-size:13px; color:#64748b;">Henüz kayıtlı daire yok.</p>';
+        return;
       }
+
+      data.forEach(apt => {
+        listDiv.innerHTML += `
+          <div class="apt-item">
+            <div>
+              <strong>Daire ${apt.apartment_number}</strong>
+              <div style="font-size:12px; color:#64748b;">${apt.resident_name || 'Boş'} ${apt.phone ? '('+apt.phone+')' : ''}</div>
+            </div>
+            <button class="btn-delete" style="padding:4px 8px; font-size:11px;" onclick="deleteApartment(${apt.id})">Sil</button>
+          </div>
+        `;
+      });
+    }
+
+    async function addApartment() {
+      const tenantId = document.getElementById('activeTenantId').value;
+      const apartment_number = document.getElementById('aptNo').value;
+      const resident_name = document.getElementById('residentName').value;
+      const phone = document.getElementById('phone').value;
+
+      if(!apartment_number) return alert('Lütfen daire numarasını girin!');
+
+      await fetch(`${API_URL}/${tenantId}/apartments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apartment_number, resident_name, phone })
+      });
+
+      document.getElementById('aptNo').value = '';
+      document.getElementById('residentName').value = '';
+      document.getElementById('phone').value = '';
+
+      fetchApartments(tenantId);
+    }
+
+    async function deleteApartment(aptId) {
+      if(!confirm('Daireyi silmek istediğinize emin misiniz?')) return;
+      const tenantId = document.getElementById('activeTenantId').value;
+      await fetch(`${window.location.origin}/api/apartments/${aptId}`, { method: 'DELETE' });
+      fetchApartments(tenantId);
     }
 
     fetchTenants();
