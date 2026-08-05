@@ -6,7 +6,7 @@
   <title>Emlak & Site Yönetimi</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Font Icon -->
+  <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
@@ -69,7 +69,7 @@
 
     <!-- SİTE KARTLARI IZGARASI -->
     <div id="tenantsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- JavaScript ile buraya kartlar yüklenecek -->
+      <!-- JS ile dinamik doldurulacak -->
     </div>
 
   </main>
@@ -89,6 +89,23 @@
       <!-- Modal Body -->
       <div class="p-6 overflow-y-auto flex-1">
         <input type="hidden" id="activeTenantId">
+
+        <!-- ➕ YENİ DAİRE EKLEME ALANI -->
+        <div class="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 mb-6">
+          <h4 class="text-xs font-bold text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <i class="fa-solid fa-plus-circle"></i> Yeni Daire Ekle
+          </h4>
+          <form onsubmit="handleAddApartment(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <input type="text" id="newAptNo" placeholder="Daire No (Örn: 12)" required class="px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm">
+            <input type="text" id="newAptResident" placeholder="Sakin Adı Soyadı" class="px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm">
+            <div class="flex gap-2">
+              <input type="tel" id="newAptPhone" placeholder="Telefon" class="w-full px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm">
+              <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition whitespace-nowrap shadow-sm">
+                Ekle
+              </button>
+            </div>
+          </form>
+        </div>
 
         <!-- 🔍 DAİRE ARAMA ÇUBUĞU + BORÇLU FİLTRESİ -->
         <div class="flex flex-col sm:flex-row gap-3 mb-6">
@@ -126,7 +143,7 @@
               </tr>
             </thead>
             <tbody id="apartmentsTableBody" class="divide-y divide-gray-100">
-              <!-- Daire satırları JavaScript ile yüklenecek -->
+              <!-- Daire satırları JS ile yüklenecek -->
             </tbody>
           </table>
         </div>
@@ -149,16 +166,32 @@
     let allApartments = [];
     let showOnlyDebt = false;
 
-    // Sayfa Yüklendiğinde Otomatik Çalışır
+    // Sayfa Açıldığında Çalışır
     document.addEventListener('DOMContentLoaded', () => {
       loadTenants();
     });
 
-    // 1. ANA SAYFA: SİTELERİ VE İSTATİSTİKLERİ YÜKLE
+    // 1. ANA SAYFA: SİTELERİ VE CANLI DAİRE SAYILARINI YÜKLE
     async function loadTenants() {
       try {
         const res = await fetch('/api/tenants');
         allTenants = await res.json();
+
+        // Her sitenin gerçek daire sayısını backend'den canlı alıyoruz
+        for (let tenant of allTenants) {
+          try {
+            const aptRes = await fetch(`/api/tenants/${tenant.id}/apartments`);
+            if (aptRes.ok) {
+              const apts = await aptRes.json();
+              tenant.real_apartment_count = apts.length;
+            } else {
+              tenant.real_apartment_count = tenant.apartment_count || 0;
+            }
+          } catch (e) {
+            tenant.real_apartment_count = tenant.apartment_count || 0;
+          }
+        }
+
         renderTenants(allTenants);
         calculateStats(allTenants);
       } catch (err) {
@@ -166,7 +199,7 @@
       }
     }
 
-    // Siteleri Ekrana Bas
+    // Siteleri Kart Olarak Bas
     function renderTenants(tenantsToRender) {
       const container = document.getElementById('tenantsContainer');
       if (!container) return;
@@ -192,7 +225,7 @@
                 </p>
               </div>
               <span class="bg-indigo-50 text-indigo-600 text-xs px-2.5 py-1 rounded-full font-semibold">
-                ${tenant.apartment_count || 0} Daire
+                ${tenant.real_apartment_count || 0} Daire
               </span>
             </div>
             
@@ -216,22 +249,22 @@
       if (totalSitesEl) totalSitesEl.innerText = tenants.length;
 
       let apartmentSum = 0;
-      tenants.forEach(t => apartmentSum += (parseInt(t.apartment_count) || 0));
+      tenants.forEach(t => apartmentSum += (parseInt(t.real_apartment_count) || 0));
       if (totalApartmentsEl) totalApartmentsEl.innerText = apartmentSum;
 
       try {
         const res = await fetch('/api/payments/stats');
         if (res.ok) {
           const stats = await res.json();
-          if (totalCollectedEl) totalCollectedEl.innerText = `₺${(stats.collected || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
-          if (totalPendingEl) totalPendingEl.innerText = `₺${(stats.pending || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
+          if (totalCollectedEl) totalCollectedEl.innerText = `₺${(parseFloat(stats.collected) || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
+          if (totalPendingEl) totalPendingEl.innerText = `₺${(parseFloat(stats.pending) || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
         }
       } catch (e) {
         console.error('İstatistik çekme hatası:', e);
       }
     }
 
-    // Ana Sayfa Site Arama
+    // Ana Sayfa Site Arama Filtresi
     function filterTenants() {
       const query = document.getElementById('searchInput')?.value.toLowerCase().trim() || '';
       const filtered = allTenants.filter(t => 
@@ -260,12 +293,55 @@
       document.getElementById('apartmentModal').classList.add('hidden');
     }
 
+    // Daire Ekleme İşlemi
+    async function handleAddApartment(e) {
+      e.preventDefault();
+      const tenantId = document.getElementById('activeTenantId').value;
+      const apartment_number = document.getElementById('newAptNo').value;
+      const resident_name = document.getElementById('newAptResident').value;
+      const phone = document.getElementById('newAptPhone').value;
+
+      try {
+        const res = await fetch(`/api/tenants/${tenantId}/apartments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ apartment_number, resident_name, phone })
+        });
+
+        if (res.ok) {
+          document.getElementById('newAptNo').value = '';
+          document.getElementById('newAptResident').value = '';
+          document.getElementById('newAptPhone').value = '';
+          loadApartments(tenantId);
+          loadTenants(); // Ana sayfadaki daire sayısını güncellemek için
+        }
+      } catch (err) {
+        console.error('Daire eklenirken hata oluştu:', err);
+      }
+    }
+
+    // Daire Silme İşlemi
+    async function deleteApartment(apartmentId) {
+      if (!confirm('Bu daireyi silmek istediğinize emin misiniz?')) return;
+
+      try {
+        const res = await fetch(`/api/apartments/${apartmentId}`, { method: 'DELETE' });
+        if (res.ok) {
+          const tenantId = document.getElementById('activeTenantId').value;
+          loadApartments(tenantId);
+          loadTenants();
+        }
+      } catch (err) {
+        console.error('Daire silinirken hata oluştu:', err);
+      }
+    }
+
+    // Daireleri Yükle & Borçlarını Hesapla
     async function loadApartments(tenantId) {
       try {
         const res = await fetch(`/api/tenants/${tenantId}/apartments`);
         allApartments = await res.json();
 
-        // Ödenmemiş toplam borç tutarını hesapla
         for (let apt of allApartments) {
           try {
             const payRes = await fetch(`/api/apartments/${apt.id}/payments`);
@@ -289,6 +365,7 @@
       }
     }
 
+    // Daireleri Tabloya Yaz
     function renderApartments(apartmentsToRender) {
       const tbody = document.getElementById('apartmentsTableBody');
       if (!tbody) return;
@@ -317,12 +394,12 @@
             </td>
             <td class="p-3">${apt.phone || '-'}</td>
             <td class="p-3">
-              <button onclick="openPaymentModal(${apt.id}, '${apt.apartment_number}')" class="text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 px-2.5 py-1 rounded-full font-medium hover:bg-indigo-100 transition">
+              <button onclick="openPaymentModal(${apt.id}, '${apt.apartment_number}')" class="text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 px-2.5 py-1 rounded-full font-medium hover:bg-indigo-100 transition flex items-center gap-1.5">
                 <i class="fa-solid fa-wallet"></i> Aidat Yönetimi
               </button>
             </td>
             <td class="p-3 text-right">
-              <button onclick="deleteApartment(${apt.id})" class="text-red-500 hover:text-red-700">
+              <button onclick="deleteApartment(${apt.id})" class="text-red-500 hover:text-red-700 p-1">
                 <i class="fa-solid fa-trash"></i>
               </button>
             </td>
@@ -331,6 +408,7 @@
       });
     }
 
+    // Arama ve Borçlu Filtreleme
     function filterApartments() {
       const input = document.getElementById('apartmentSearchInput');
       const query = input ? input.value.toLowerCase().trim() : '';
@@ -352,12 +430,14 @@
       renderApartments(filtered);
     }
 
+    // Borç Filtresi Buton Tıklama
     function toggleDebtFilter() {
       showOnlyDebt = !showOnlyDebt;
       updateDebtFilterBtnStyle();
       filterApartments();
     }
 
+    // Buton Görünüm Güncelleme
     function updateDebtFilterBtnStyle() {
       const btn = document.getElementById('toggleDebtFilterBtn');
       if (!btn) return;
