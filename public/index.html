@@ -4,298 +4,254 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Emlak & Site Yönetimi</title>
-  <!-- Tailwind CSS -->
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
+  <!-- FontAwesome İkon Seti -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
+<body class="bg-gray-100 min-h-screen text-gray-800 font-sans">
 
-  <!-- 1. ÜST HEADER -->
+  <!-- HEADER / ÜST BAR -->
   <header class="bg-indigo-600 text-white shadow-md">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-      <div class="flex items-center gap-3">
-        <i class="fa-solid fa-building-user text-2xl"></i>
-        <h1 class="text-xl font-bold tracking-wide">Emlak & Site Yönetimi</h1>
-      </div>
-      <button onclick="openAddTenantModal()" class="bg-white/10 hover:bg-white/20 text-white text-sm font-medium px-4 py-2 rounded-xl border border-white/20 transition flex items-center gap-2">
+      <h1 class="text-2xl font-bold flex items-center gap-2">
+        <i class="fa-solid fa-building"></i> Emlak & Site Yönetimi
+      </h1>
+      <button onclick="openTenantModal()" class="bg-indigo-800 hover:bg-indigo-900 text-white px-4 py-2 rounded-lg font-medium text-sm transition shadow flex items-center gap-2">
         <i class="fa-solid fa-plus"></i> Yeni Site Ekle
       </button>
     </div>
   </header>
 
-  <!-- 2. ANA İÇERİK KONTEYNERİ -->
+  <!-- ANA İÇERİK CONTAINER -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-    <!-- ÜST İSTATİSTİK KARTLARI -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm border-l-4 border-l-indigo-500">
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">TOPLAM SİTE</p>
-        <h3 id="totalSites" class="text-2xl font-black text-gray-800 mt-1">0</h3>
+    <!-- STATS (ÖZET KARTLARI) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-indigo-500">
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Toplam Site</p>
+        <h3 id="statTenants" class="text-3xl font-extrabold text-gray-800 mt-2">0</h3>
       </div>
-      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm border-l-4 border-l-blue-500">
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">TOPLAM DAİRE</p>
-        <h3 id="totalApartments" class="text-2xl font-black text-gray-800 mt-1">0</h3>
+      <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Toplam Daire</p>
+        <h3 id="statApartments" class="text-3xl font-extrabold text-gray-800 mt-2">0</h3>
       </div>
-      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm border-l-4 border-l-emerald-500">
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">TAHSİL EDİLEN AİDAT</p>
-        <h3 id="totalCollected" class="text-2xl font-black text-emerald-600 mt-1">₺0,00</h3>
+      <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-emerald-500">
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tahsil Edilen Aidat</p>
+        <h3 id="statCollected" class="text-3xl font-extrabold text-emerald-600 mt-2">₺0,00</h3>
       </div>
-      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm border-l-4 border-l-rose-500">
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">BEKLEYEN ÖDEME</p>
-        <h3 id="totalPending" class="text-2xl font-black text-rose-600 mt-1">₺0,00</h3>
+      <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-rose-500">
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Bekleyen Ödeme</p>
+        <h3 id="statPending" class="text-3xl font-extrabold text-rose-600 mt-2">₺0,00</h3>
       </div>
     </div>
 
-    <!-- SİTE LİSTESİ BAŞLIK VE ARAMA -->
+    <!-- SİTELER BAŞLIK VE CANLI ARAMA ÇUBUĞU -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-      <h2 class="text-lg font-bold text-gray-800">Kayıtlı Siteler</h2>
-      <div class="flex items-center gap-2 w-full sm:w-auto">
-        <div class="relative flex-1 sm:w-64">
-          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+      <h2 class="text-xl font-bold text-gray-700">Kayıtlı Siteler</h2>
+      
+      <div class="flex items-center gap-3 w-full sm:w-auto">
+        <!-- Site Arama Inputu -->
+        <div class="relative w-full sm:w-64">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
           <input 
             type="text" 
-            id="searchInput" 
+            id="tenantSearchInput" 
             oninput="filterTenants()" 
             placeholder="Site adı veya adres ara..." 
-            class="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm"
+            class="w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white shadow-sm"
           >
         </div>
-        <button onclick="loadTenants()" class="text-xs bg-white text-indigo-600 border border-indigo-200 px-3 py-2 rounded-xl font-medium hover:bg-indigo-50 transition flex items-center gap-1 shadow-sm">
+        <button onclick="loadDashboard()" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium whitespace-nowrap flex items-center gap-1">
           <i class="fa-solid fa-rotate"></i> Yenile
         </button>
       </div>
     </div>
 
-    <!-- SİTE KARTLARI IZGARASI -->
-    <div id="tenantsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- JS ile dinamik doldurulacak -->
+    <!-- SİTELER KART LİSTESİ -->
+    <div id="tenantsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- JavaScript dinamik olarak doldurur -->
     </div>
 
   </main>
 
-  <!-- 3. DAİRELER YÖNETİMİ MODALI -->
-  <div id="apartmentModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
-      
-      <!-- Modal Header -->
-      <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-        <h3 id="modalTitle" class="text-lg font-bold text-gray-800">Daire Yönetimi</h3>
-        <button onclick="closeApartmentModal()" class="text-gray-400 hover:text-gray-600 text-lg p-1">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+
+  <!-- ==================== MODALS (AÇILIR PENCERELER) ==================== -->
+
+  <!-- 1. YENİ SİTE EKLEME MODALI -->
+  <div id="tenantModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold text-gray-800">Yeni Site Ekle</h3>
+        <button onclick="closeTenantModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
       </div>
-
-      <!-- Modal Body -->
-      <div class="p-6 overflow-y-auto flex-1">
-        <input type="hidden" id="activeTenantId">
-
-        <!-- ➕ YENİ DAİRE EKLEME ALANI -->
-        <div class="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 mb-6">
-          <h4 class="text-xs font-bold text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-            <i class="fa-solid fa-plus-circle"></i> Yeni Daire Ekle
-          </h4>
-          <form onsubmit="handleAddApartment(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <input type="text" id="newAptNo" placeholder="Daire No (Örn: 12)" required class="px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm">
-            <input type="text" id="newAptResident" placeholder="Sakin Adı Soyadı" class="px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm">
-            <div class="flex gap-2">
-              <input type="tel" id="newAptPhone" placeholder="Telefon" class="w-full px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm">
-              <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition whitespace-nowrap shadow-sm">
-                Ekle
-              </button>
-            </div>
-          </form>
+      <form id="tenantForm" onsubmit="handleSaveTenant(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Site Adı</label>
+          <input type="text" id="tenantName" required placeholder="Örn: Güneş Sitesi" class="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Adres</label>
+          <textarea id="tenantAddress" placeholder="Örn: Merkez/Kastamonu" rows="3" class="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeTenantModal()" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">İptal</button>
+          <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-        <!-- 🔍 DAİRE ARAMA ÇUBUĞU + BORÇLU FİLTRESİ -->
-        <div class="flex flex-col sm:flex-row gap-3 mb-6">
-          <div class="relative flex-1">
-            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
-            <input 
-              type="text" 
-              id="apartmentSearchInput" 
-              oninput="filterApartments()" 
-              placeholder="Daire no, sakin adı veya telefon ara..." 
-              class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm transition"
-            >
-          </div>
-          
-          <!-- Sadece Borçlular Filtre Butonu -->
-          <button 
-            id="toggleDebtFilterBtn" 
-            onclick="toggleDebtFilter()" 
-            class="px-4 py-2.5 bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 border border-gray-200 hover:border-red-200 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 whitespace-nowrap shadow-sm"
-          >
-            <i class="fa-solid fa-filter"></i> Sadece Borçlular
+
+  <!-- 2. DAİRELER MODALI -->
+  <div id="apartmentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 relative shadow-2xl">
+      
+      <input type="hidden" id="activeTenantId">
+
+      <!-- Modal Başlık, CSV İndir ve Kapat Butonu -->
+      <div class="flex justify-between items-center mb-6 border-b pb-4">
+        <h3 id="modalTitle" class="text-xl font-bold text-gray-800">Daireler</h3>
+        <div class="flex items-center gap-3">
+          <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5 shadow-sm">
+            <i class="fa-solid fa-file-excel"></i> Excel (CSV) İndir
           </button>
+          <button onclick="closeApartmentModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none px-2">&times;</button>
         </div>
-
-        <!-- Daireler Tablosu -->
-        <div class="overflow-x-auto border border-gray-100 rounded-xl">
-          <table class="w-full text-left text-sm text-gray-600">
-            <thead class="bg-gray-50 text-xs uppercase text-gray-400 border-b border-gray-100">
-              <tr>
-                <th class="p-3">Daire No</th>
-                <th class="p-3">Sakin / Durum</th>
-                <th class="p-3">Telefon</th>
-                <th class="p-3">Aidat</th>
-                <th class="p-3 text-right">İşlem</th>
-              </tr>
-            </thead>
-            <tbody id="apartmentsTableBody" class="divide-y divide-gray-100">
-              <!-- Daire satırları JS ile yüklenecek -->
-            </tbody>
-          </table>
-        </div>
-
       </div>
 
-      <!-- Modal Footer -->
-      <div class="p-4 bg-gray-50 border-t border-gray-100 text-right">
-        <button onclick="closeApartmentModal()" class="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-xl transition">
-          Kapat
+      <!-- DAİRE ARAMA ÇUBUĞU -->
+      <div class="relative mb-6">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        <input 
+          type="text" 
+          id="apartmentSearchInput" 
+          oninput="filterApartments()" 
+          placeholder="Daire no, sakin adı veya telefon ara..." 
+          class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none shadow-sm transition"
+        >
+      </div>
+
+      <!-- YENİ DAİRE EKLE FORM -->
+      <form id="apartmentForm" onsubmit="handleAddApartment(event)" class="bg-gray-50 p-4 rounded-xl mb-6 grid grid-cols-1 sm:grid-cols-4 gap-3 border border-gray-100">
+        <input type="text" id="aptNo" placeholder="Daire No (Örn: 5)" required class="p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+        <input type="text" id="aptResident" placeholder="Sakin Adı Soyadı" class="p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+        <input type="text" id="aptPhone" placeholder="Telefon" class="p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg text-sm transition shadow-sm flex items-center justify-center gap-1">
+          <i class="fa-solid fa-plus"></i> Daire Ekle
         </button>
+      </form>
+
+      <!-- DAİRELER TABLOSU -->
+      <div class="overflow-x-auto border rounded-xl">
+        <table class="w-full text-left text-sm text-gray-600">
+          <thead class="bg-gray-100 text-gray-700 font-semibold border-b">
+            <tr>
+              <th class="p-3">Daire No</th>
+              <th class="p-3">Sakin Adı</th>
+              <th class="p-3">Telefon</th>
+              <th class="p-3">Aidat Durumu</th>
+              <th class="p-3 text-right">İşlem</th>
+            </tr>
+          </thead>
+          <tbody id="apartmentsTableBody" class="divide-y divide-gray-100 bg-white">
+            <!-- JavaScript dinamik dolduracak -->
+          </tbody>
+        </table>
       </div>
 
     </div>
   </div>
 
-  <!-- 4. AİDAT / ÖDEME YÖNETİMİ MODALI -->
-  <div id="paymentModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-[60]">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
+
+  <!-- 3. AİDAT / PAYMENTS MODALI -->
+  <div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
+      <input type="hidden" id="activeApartmentId">
       
-      <!-- Payment Modal Header -->
-      <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-        <h3 id="paymentModalTitle" class="text-base font-bold text-gray-800">Daire Aidat Takibi</h3>
-        <button onclick="closePaymentModal()" class="text-gray-400 hover:text-gray-600 text-lg p-1">
-          <i class="fa-solid fa-xmark"></i>
+      <div class="flex justify-between items-center mb-4 border-b pb-3">
+        <h3 id="paymentModalTitle" class="text-lg font-bold text-gray-800">Aidat Yönetimi</h3>
+        <button onclick="closePaymentModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <!-- YENİ AİDAT EKLE FORM -->
+      <form id="paymentForm" onsubmit="handleAddPayment(event)" class="bg-gray-50 p-4 rounded-xl mb-4 grid grid-cols-1 sm:grid-cols-3 gap-2 border border-gray-100">
+        <input type="text" id="payPeriod" placeholder="Dönem (Ocak 2026)" required class="p-2 border rounded text-xs outline-none bg-white">
+        <input type="number" step="0.01" id="payAmount" placeholder="Tutar (TL)" required class="p-2 border rounded text-xs outline-none bg-white">
+        <select id="payStatus" class="p-2 border rounded text-xs outline-none bg-white">
+          <option value="Ödenmedi">Ödenmedi</option>
+          <option value="Ödendi">Ödendi</option>
+        </select>
+        <button type="submit" class="sm:col-span-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 rounded text-xs transition mt-1">
+          + Aidat Kaydı Ekle
         </button>
-      </div>
+      </form>
 
-      <!-- Payment Modal Body -->
-      <div class="p-6 overflow-y-auto flex-1">
-        <input type="hidden" id="activeApartmentId">
-
-        <!-- ➕ AİDAT TAHAKKUK ETTİR / EKLE FORM -->
-        <div class="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 mb-6">
-          <h4 class="text-xs font-bold text-emerald-900 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-            <i class="fa-solid fa-plus-circle"></i> Yeni Aidat / Borç Ekle
-          </h4>
-          <form onsubmit="handleAddPayment(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <input type="number" step="0.01" id="payAmount" placeholder="Tutar (₺)" required class="px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none shadow-sm">
-            <input type="month" id="payMonth" required class="px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none shadow-sm">
-            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition shadow-sm">
-              Borç Ekle
-            </button>
-          </form>
-        </div>
-
-        <!-- AİDAT GEÇMİŞİ VE ÖDEME DURUMU TABLOSU -->
-        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Aidat / Ödeme Geçmişi</h4>
-        <div class="overflow-x-auto border border-gray-100 rounded-xl">
-          <table class="w-full text-left text-sm text-gray-600">
-            <thead class="bg-gray-50 text-xs uppercase text-gray-400 border-b border-gray-100">
-              <tr>
-                <th class="p-3">Dönem / Ay</th>
-                <th class="p-3">Tutar</th>
-                <th class="p-3">Durum</th>
-                <th class="p-3 text-right">İşlem</th>
-              </tr>
-            </thead>
-            <tbody id="paymentsTableBody" class="divide-y divide-gray-100">
-              <!-- Ödemeler JS ile yüklenecek -->
-            </tbody>
-          </table>
-        </div>
-
-      </div>
-
-      <!-- Payment Modal Footer -->
-      <div class="p-4 bg-gray-50 border-t border-gray-100 text-right">
-        <button onclick="closePaymentModal()" class="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-xl transition">
-          Kapat
-        </button>
-      </div>
-
+      <!-- AİDAT GEÇMİŞİ LİSTESİ -->
+      <ul id="paymentsList" class="divide-y divide-gray-100 border rounded-xl max-h-60 overflow-y-auto">
+        <!-- JavaScript doldurur -->
+      </ul>
     </div>
   </div>
 
-  <!-- 5. JAVASCRIPT KODLARI -->
+
+  <!-- ==================== JAVASCRIPT MANTIĞI ==================== -->
   <script>
+    // Global Veri Hafızası (State) - Anlık filtreleme için verileri saklar
     let allTenants = [];
     let allApartments = [];
-    let showOnlyDebt = false;
 
-    // Sayfa Açıldığında Çalışır
     document.addEventListener('DOMContentLoaded', () => {
-      loadTenants();
-      // Tarih inputuna bu ayı varsayılan yap
-      const today = new Date();
-      const monthStr = today.toISOString().slice(0, 7);
-      const payMonthInput = document.getElementById('payMonth');
-      if (payMonthInput) payMonthInput.value = monthStr;
+      loadDashboard();
     });
 
-    // 1. ANA SAYFA: SİTELERİ VE CANLI DAİRE SAYILARINI YÜKLE
-    async function loadTenants() {
+    // --- DASHBOARD & SİTELERİ YÜKLE ---
+    async function loadDashboard() {
       try {
-        const res = await fetch('/api/tenants');
-        allTenants = await res.json();
+        const tenantSearchInput = document.getElementById('tenantSearchInput');
+        if (tenantSearchInput) tenantSearchInput.value = '';
 
-        for (let tenant of allTenants) {
-          try {
-            const aptRes = await fetch(`/api/tenants/${tenant.id}/apartments`);
-            if (aptRes.ok) {
-              const apts = await aptRes.json();
-              tenant.real_apartment_count = apts.length;
-            } else {
-              tenant.real_apartment_count = tenant.apartment_count || 0;
-            }
-          } catch (e) {
-            tenant.real_apartment_count = tenant.apartment_count || 0;
-          }
-        }
+        // Özet İstatistikler
+        const statsRes = await fetch('/api/stats');
+        const stats = await statsRes.json();
+        
+        document.getElementById('statTenants').innerText = stats.totalTenants;
+        document.getElementById('statApartments').innerText = stats.totalApartments;
+        document.getElementById('statCollected').innerText = `₺${stats.totalCollected.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
+        document.getElementById('statPending').innerText = `₺${stats.totalPending.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
 
+        // Siteler Listesini Çek ve Hafızaya Al
+        const tenantsRes = await fetch('/api/tenants');
+        allTenants = await tenantsRes.json();
+        
         renderTenants(allTenants);
-        calculateStats(allTenants);
       } catch (err) {
-        console.error('Siteler yüklenirken hata oluştu:', err);
+        console.error('Yükleme hatası:', err);
       }
     }
 
-    // Siteleri Kart Olarak Bas
     function renderTenants(tenantsToRender) {
-      const container = document.getElementById('tenantsContainer');
-      if (!container) return;
-      container.innerHTML = '';
+      const tenantsList = document.getElementById('tenantsList');
+      tenantsList.innerHTML = '';
 
       if (tenantsToRender.length === 0) {
-        container.innerHTML = `
-          <div class="col-span-full text-center py-12 text-gray-400 bg-white rounded-2xl border border-gray-100">
-            <i class="fa-solid fa-building-circle-xmark text-4xl mb-3 opacity-40"></i>
-            <p>Henüz kayıtlı bir site bulunamadı.</p>
-          </div>`;
+        tenantsList.innerHTML = `<div class="col-span-full text-center py-8 text-gray-500">Aranan kriterlere uygun site bulunamadı.</div>`;
         return;
       }
 
       tenantsToRender.forEach(tenant => {
-        container.innerHTML += `
-          <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition duration-200">
-            <div class="flex justify-between items-start mb-4">
-              <div>
-                <h3 class="font-bold text-gray-800 text-lg">${tenant.name}</h3>
-                <p class="text-gray-400 text-xs mt-1 flex items-center gap-1">
-                  <i class="fa-solid fa-location-dot"></i> ${tenant.address || 'Adres belirtilmedi'}
-                </p>
-              </div>
-              <span class="bg-indigo-50 text-indigo-600 text-xs px-2.5 py-1 rounded-full font-semibold">
-                ${tenant.real_apartment_count || 0} Daire
-              </span>
+        tenantsList.innerHTML += `
+          <div class="bg-white rounded-xl p-5 shadow-md hover:shadow-lg transition border border-gray-100 flex flex-col justify-between">
+            <div>
+              <h3 class="font-bold text-lg text-gray-800 mb-1">${tenant.name}</h3>
+              <p class="text-xs text-gray-500 mb-4">${tenant.address || 'Adres belirtilmemiş'}</p>
             </div>
-            
-            <div class="flex items-center justify-between pt-4 border-t border-gray-50 mt-4">
-              <button onclick="openApartmentModal(${tenant.id}, '${tenant.name}')" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-sm py-2 rounded-xl font-medium transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-building"></i> Daireleri Yönet
+            <div class="flex justify-between items-center pt-3 border-t">
+              <button onclick="openApartmentModal(${tenant.id}, '${tenant.name}')" class="text-indigo-600 hover:text-indigo-800 text-sm font-semibold flex items-center gap-1">
+                Daireler & Detay <i class="fa-solid fa-arrow-right text-xs"></i>
+              </button>
+              <button onclick="deleteTenant(${tenant.id})" class="text-red-500 hover:text-red-700 text-sm">
+                <i class="fa-solid fa-trash"></i>
               </button>
             </div>
           </div>
@@ -303,42 +259,47 @@
       });
     }
 
-    // Üst İstatistik Kartlarını Hesapla
-    async function calculateStats(tenants) {
-      const totalSitesEl = document.getElementById('totalSites');
-      const totalApartmentsEl = document.getElementById('totalApartments');
-      const totalCollectedEl = document.getElementById('totalCollected');
-      const totalPendingEl = document.getElementById('totalPending');
-
-      if (totalSitesEl) totalSitesEl.innerText = tenants.length;
-
-      let apartmentSum = 0;
-      tenants.forEach(t => apartmentSum += (parseInt(t.real_apartment_count) || 0));
-      if (totalApartmentsEl) totalApartmentsEl.innerText = apartmentSum;
-
-      try {
-        const res = await fetch('/api/payments/stats');
-        if (res.ok) {
-          const stats = await res.json();
-          if (totalCollectedEl) totalCollectedEl.innerText = `₺${(parseFloat(stats.collected) || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
-          if (totalPendingEl) totalPendingEl.innerText = `₺${(parseFloat(stats.pending) || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
-        }
-      } catch (e) {
-        console.error('İstatistik çekme hatası:', e);
-      }
-    }
-
-    // Ana Sayfa Site Arama Filtresi
     function filterTenants() {
-      const query = document.getElementById('searchInput')?.value.toLowerCase().trim() || '';
-      const filtered = allTenants.filter(t => 
-        t.name.toLowerCase().includes(query) || 
-        (t.address && t.address.toLowerCase().includes(query))
-      );
+      const input = document.getElementById('tenantSearchInput');
+      if (!input) return;
+      
+      const query = input.value.toLowerCase().trim();
+      const filtered = allTenants.filter(tenant => {
+        const nameMatch = tenant.name ? tenant.name.toLowerCase().includes(query) : false;
+        const addressMatch = tenant.address ? tenant.address.toLowerCase().includes(query) : false;
+        return nameMatch || addressMatch;
+      });
+
       renderTenants(filtered);
     }
 
-    // 2. DAİRE YÖNETİMİ MODALI
+    // --- SİTE EKLEME / SİLME ---
+    function openTenantModal() { document.getElementById('tenantModal').classList.remove('hidden'); }
+    function closeTenantModal() { document.getElementById('tenantModal').classList.add('hidden'); }
+
+    async function handleSaveTenant(e) {
+      e.preventDefault();
+      const name = document.getElementById('tenantName').value;
+      const address = document.getElementById('tenantAddress').value;
+
+      await fetch('/api/tenants', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, address })
+      });
+
+      document.getElementById('tenantForm').reset();
+      closeTenantModal();
+      loadDashboard();
+    }
+
+    async function deleteTenant(id) {
+      if (!confirm('Bu siteyi ve bağlı tüm daireleri silmek istediğinize emin misiniz?')) return;
+      await fetch(`/api/tenants/${id}`, { method: 'DELETE' });
+      loadDashboard();
+    }
+
+    // --- DAİRELERİ YÜKLEME & FİLTRELEME ---
     async function openApartmentModal(tenantId, tenantName) {
       document.getElementById('activeTenantId').value = tenantId;
       document.getElementById('modalTitle').innerText = `${tenantName} - Daireler`;
@@ -346,9 +307,6 @@
       
       const aptSearchInput = document.getElementById('apartmentSearchInput');
       if (aptSearchInput) aptSearchInput.value = '';
-      
-      showOnlyDebt = false;
-      updateDebtFilterBtnStyle();
 
       loadApartments(tenantId);
     }
@@ -357,109 +315,34 @@
       document.getElementById('apartmentModal').classList.add('hidden');
     }
 
-    async function handleAddApartment(e) {
-      e.preventDefault();
-      const tenantId = document.getElementById('activeTenantId').value;
-      const apartment_number = document.getElementById('newAptNo').value;
-      const resident_name = document.getElementById('newAptResident').value;
-      const phone = document.getElementById('newAptPhone').value;
-
-      try {
-        const res = await fetch(`/api/tenants/${tenantId}/apartments`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ apartment_number, resident_name, phone })
-        });
-
-        if (res.ok) {
-          document.getElementById('newAptNo').value = '';
-          document.getElementById('newAptResident').value = '';
-          document.getElementById('newAptPhone').value = '';
-          loadApartments(tenantId);
-          loadTenants();
-        }
-      } catch (err) {
-        console.error('Daire eklenirken hata oluştu:', err);
-      }
-    }
-
-    async function deleteApartment(apartmentId) {
-      if (!confirm('Bu daireyi silmek istediğinize emin misiniz?')) return;
-
-      try {
-        const res = await fetch(`/api/apartments/${apartmentId}`, { method: 'DELETE' });
-        if (res.ok) {
-          const tenantId = document.getElementById('activeTenantId').value;
-          loadApartments(tenantId);
-          loadTenants();
-        }
-      } catch (err) {
-        console.error('Daire silinirken hata oluştu:', err);
-      }
-    }
-
     async function loadApartments(tenantId) {
-      try {
-        const res = await fetch(`/api/tenants/${tenantId}/apartments`);
-        allApartments = await res.json();
-
-        for (let apt of allApartments) {
-          try {
-            const payRes = await fetch(`/api/apartments/${apt.id}/payments`);
-            const payments = await payRes.json();
-            
-            const totalDebt = payments
-              .filter(p => p.status === 'Ödenmedi')
-              .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-            
-            apt.totalDebt = totalDebt;
-            apt.hasDebt = totalDebt > 0;
-          } catch (e) {
-            apt.totalDebt = 0;
-            apt.hasDebt = false;
-          }
-        }
-
-        filterApartments();
-      } catch (err) {
-        console.error('Daireler yüklenirken hata:', err);
-      }
+      const res = await fetch(`/api/tenants/${tenantId}/apartments`);
+      allApartments = await res.json();
+      renderApartments(allApartments);
     }
 
     function renderApartments(apartmentsToRender) {
       const tbody = document.getElementById('apartmentsTableBody');
-      if (!tbody) return;
       tbody.innerHTML = '';
 
       if (apartmentsToRender.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">Aranan kriterlere uygun daire bulunamadı.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">Daire bulunamadı.</td></tr>`;
         return;
       }
 
       apartmentsToRender.forEach(apt => {
-        const debtBadge = apt.hasDebt 
-          ? `<span class="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs px-2.5 py-1 rounded-full font-semibold border border-red-200 shadow-sm">
-               <i class="fa-solid fa-triangle-exclamation"></i> ₺${apt.totalDebt.toLocaleString('tr-TR', {minimumFractionDigits: 2})} Borç
-             </span>`
-          : '';
-
         tbody.innerHTML += `
           <tr class="hover:bg-gray-50">
             <td class="p-3 font-semibold text-gray-700">Daire ${apt.apartment_number}</td>
-            <td class="p-3">
-              <div class="flex items-center gap-2">
-                <span>${apt.resident_name || '-'}</span>
-                ${debtBadge}
-              </div>
-            </td>
+            <td class="p-3">${apt.resident_name || '-'}</td>
             <td class="p-3">${apt.phone || '-'}</td>
             <td class="p-3">
-              <button onclick="openPaymentModal(${apt.id}, '${apt.apartment_number}')" class="text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 px-2.5 py-1 rounded-full font-medium hover:bg-indigo-100 transition flex items-center gap-1.5 shadow-sm">
+              <button onclick="openPaymentModal(${apt.id}, '${apt.apartment_number}')" class="text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 px-2.5 py-1 rounded-full font-medium hover:bg-indigo-100">
                 <i class="fa-solid fa-wallet"></i> Aidat Yönetimi
               </button>
             </td>
             <td class="p-3 text-right">
-              <button onclick="deleteApartment(${apt.id})" class="text-red-500 hover:text-red-700 p-1">
+              <button onclick="deleteApartment(${apt.id})" class="text-red-500 hover:text-red-700">
                 <i class="fa-solid fa-trash"></i>
               </button>
             </td>
@@ -470,151 +353,171 @@
 
     function filterApartments() {
       const input = document.getElementById('apartmentSearchInput');
-      const query = input ? input.value.toLowerCase().trim() : '';
+      if (!input) return;
 
+      const query = input.value.toLowerCase().trim();
       const filtered = allApartments.filter(apt => {
         const aptNoMatch = apt.apartment_number ? apt.apartment_number.toString().toLowerCase().includes(query) : false;
         const residentMatch = apt.resident_name ? apt.resident_name.toLowerCase().includes(query) : false;
         const phoneMatch = apt.phone ? apt.phone.toLowerCase().includes(query) : false;
         
-        const searchMatches = aptNoMatch || residentMatch || phoneMatch;
-
-        if (showOnlyDebt) {
-          return searchMatches && apt.hasDebt;
-        }
-
-        return searchMatches;
+        return aptNoMatch || residentMatch || phoneMatch;
       });
 
       renderApartments(filtered);
     }
 
-    function toggleDebtFilter() {
-      showOnlyDebt = !showOnlyDebt;
-      updateDebtFilterBtnStyle();
-      filterApartments();
+    async function handleAddApartment(e) {
+      e.preventDefault();
+      const tenantId = document.getElementById('activeTenantId').value;
+      const apartment_number = document.getElementById('aptNo').value;
+      const resident_name = document.getElementById('aptResident').value;
+      const phone = document.getElementById('aptPhone').value;
+
+      await fetch(`/api/tenants/${tenantId}/apartments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apartment_number, resident_name, phone })
+      });
+
+      document.getElementById('apartmentForm').reset();
+      loadApartments(tenantId);
+      loadDashboard();
     }
 
-    function updateDebtFilterBtnStyle() {
-      const btn = document.getElementById('toggleDebtFilterBtn');
-      if (!btn) return;
-
-      if (showOnlyDebt) {
-        btn.className = "px-4 py-2.5 bg-red-600 text-white border border-red-600 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 whitespace-nowrap shadow-sm";
-        btn.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Tüm Daireleri Göster`;
-      } else {
-        btn.className = "px-4 py-2.5 bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 border border-gray-200 hover:border-red-200 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 whitespace-nowrap shadow-sm";
-        btn.innerHTML = `<i class="fa-solid fa-filter"></i> Sadece Borçlular`;
-      }
+    async function deleteApartment(id) {
+      if (!confirm('Daireyi silmek istiyor musunuz?')) return;
+      const tenantId = document.getElementById('activeTenantId').value;
+      await fetch(`/api/apartments/${id}`, { method: 'DELETE' });
+      loadApartments(tenantId);
+      loadDashboard();
     }
 
-    // 3. AİDAT / ÖDEME YÖNETİMİ MODALI MANTIĞI
-    async function openPaymentModal(apartmentId, apartmentNumber) {
-      document.getElementById('activeApartmentId').value = apartmentId;
-      document.getElementById('paymentModalTitle').innerText = `Daire ${apartmentNumber} - Aidat Yönetimi`;
+    // --- AİDAT / PAYMENTS YÖNETİMİ ---
+    async function openPaymentModal(aptId, aptNo) {
+      document.getElementById('activeApartmentId').value = aptId;
+      document.getElementById('paymentModalTitle').innerText = `Daire ${aptNo} - Aidat Geçmişi`;
       document.getElementById('paymentModal').classList.remove('hidden');
-
-      loadPayments(apartmentId);
+      loadPayments(aptId);
     }
 
     function closePaymentModal() {
       document.getElementById('paymentModal').classList.add('hidden');
     }
 
-    // Daireye ait aidat ödemelerini yükle
-    async function loadPayments(apartmentId) {
-      try {
-        const res = await fetch(`/api/apartments/${apartmentId}/payments`);
-        const payments = await res.json();
-        renderPayments(payments);
-      } catch (err) {
-        console.error('Ödemeler yüklenirken hata:', err);
-      }
-    }
-
-    // Aidat tablosunu doldur
-    function renderPayments(payments) {
-      const tbody = document.getElementById('paymentsTableBody');
-      if (!tbody) return;
-      tbody.innerHTML = '';
+    async function loadPayments(aptId) {
+      const res = await fetch(`/api/apartments/${aptId}/payments`);
+      const payments = await res.json();
+      const list = document.getElementById('paymentsList');
+      list.innerHTML = '';
 
       if (payments.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-400">Henüz aidat kaydı bulunmuyor.</td></tr>`;
+        list.innerHTML = `<li class="p-3 text-center text-gray-400">Aidat kaydı bulunamadı.</li>`;
         return;
       }
 
       payments.forEach(pay => {
         const isPaid = pay.status === 'Ödendi';
-        const statusBadge = isPaid 
-          ? `<span class="bg-emerald-100 text-emerald-700 text-xs px-2.5 py-1 rounded-full font-semibold">Ödendi</span>`
-          : `<span class="bg-red-100 text-red-700 text-xs px-2.5 py-1 rounded-full font-semibold">Ödenmedi</span>`;
-
-        const toggleBtn = isPaid
-          ? `<button onclick="togglePaymentStatus(${pay.id}, 'Ödenmedi')" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1 rounded-lg transition">İptal Et</button>`
-          : `<button onclick="togglePaymentStatus(${pay.id}, 'Ödendi')" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-lg transition font-medium">Öde</button>`;
-
-        tbody.innerHTML += `
-          <tr class="hover:bg-gray-50">
-            <td class="p-3 font-medium text-gray-800">${pay.month || '-'}</td>
-            <td class="p-3 font-bold text-gray-700">₺${parseFloat(pay.amount || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
-            <td class="p-3">${statusBadge}</td>
-            <td class="p-3 text-right">
-              ${toggleBtn}
-            </td>
-          </tr>
+        list.innerHTML += `
+          <li class="p-3 flex justify-between items-center">
+            <div>
+              <span class="font-medium text-gray-700">${pay.period}</span>
+              <span class="text-xs text-gray-400 block">₺${parseFloat(pay.amount).toFixed(2)}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="togglePaymentStatus(${pay.id})" class="px-2.5 py-1 text-xs rounded-full font-semibold ${isPaid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                ${pay.status}
+              </button>
+              <button onclick="deletePayment(${pay.id})" class="text-gray-400 hover:text-red-500 text-xs">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </li>
         `;
       });
     }
 
-    // Yeni Aidat / Borç Ekleme Fonksiyonu (Düzeltilmiş)
     async function handleAddPayment(e) {
       e.preventDefault();
-      const apartmentId = document.getElementById('activeApartmentId').value;
-      const rawAmount = document.getElementById('payAmount').value;
-      const rawMonth = document.getElementById('payMonth').value; // Örn: "2026-08"
+      const aptId = document.getElementById('activeApartmentId').value;
+      const period = document.getElementById('payPeriod').value;
+      const amount = document.getElementById('payAmount').value;
+      const status = document.getElementById('payStatus').value;
 
-      // 1. Tutar doğrulaması ve sayıya çevirme
-      const amount = parseFloat(rawAmount);
-      if (isNaN(amount) || amount <= 0) {
-        alert("Lütfen geçerli bir tutar girin.");
-        return;
-      }
+      await fetch(`/api/apartments/${aptId}/payments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ period, amount, status })
+      });
 
-      // 2. Ay verisini formatlama (Gerekirse "2026-08-01" gibi tam tarih yapıyoruz)
-      // Backend string ("2026-08") mi yoksa tam tarih mi bekliyor kontrolü için:
-      const monthFormatted = rawMonth.length === 7 ? `${rawMonth}-01` : rawMonth;
+      document.getElementById('paymentForm').reset();
+      loadPayments(aptId);
+      loadDashboard();
+    }
 
-      const payload = {
-        amount: amount,                 // Number olarak gönderiyoruz
-        month: rawMonth,                // veya monthFormatted (Backend yapına göre)
-        status: 'Ödenmedi'
-      };
+    async function togglePaymentStatus(id) {
+      const aptId = document.getElementById('activeApartmentId').value;
+      await fetch(`/api/payments/${id}/toggle`, { method: 'PUT' });
+      loadPayments(aptId);
+      loadDashboard();
+    }
+
+    async function deletePayment(id) {
+      const aptId = document.getElementById('activeApartmentId').value;
+      await fetch(`/api/payments/${id}`, { method: 'DELETE' });
+      loadPayments(aptId);
+      loadDashboard();
+    }
+
+    // --- CSV / EXCEL DIŞA AKTAR ---
+    async function exportToCSV() {
+      const tenantId = document.getElementById('activeTenantId').value;
+      const modalTitle = document.getElementById('modalTitle').innerText;
+      const tenantName = modalTitle.replace(' - Daireler', '');
 
       try {
-        const res = await fetch(`/api/apartments/${apartmentId}/payments`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+        const aptRes = await fetch(`/api/tenants/${tenantId}/apartments`);
+        const apartments = await aptRes.json();
 
-        if (!res.ok) {
-          // Backend'den gelen spesifik hata mesajını yakalayalım
-          const errorData = await res.json().catch(() => ({}));
-          console.error('Backend Hata Detayı:', errorData);
-          alert(`Hata (${res.status}): ${errorData.message || errorData.error || 'İşlem başarısız.'}`);
+        if (!apartments || apartments.length === 0) {
+          alert('İndirilecek daire verisi bulunamadı.');
           return;
         }
 
-        // Başarılıysa formu temizle ve güncel verileri yükle
-        document.getElementById('payAmount').value = '';
-        loadPayments(apartmentId);
-        
-        const tenantId = document.getElementById('activeTenantId').value;
-        if (tenantId) loadApartments(tenantId);
-        loadTenants();
+        let csvContent = "\uFEFFDaire No,Sakin Adı,Telefon,Aidat Dönemi,Tutar (TL),Ödeme Durumu\n";
+
+        for (const apt of apartments) {
+          const payRes = await fetch(`/api/apartments/${apt.id}/payments`);
+          const payments = await payRes.json();
+
+          const aptNo = `"${apt.apartment_number || ''}"`;
+          const resName = `"${apt.resident_name || 'Boş'}"`;
+          const phone = `"${apt.phone || ''}"`;
+
+          if (!payments || payments.length === 0) {
+            csvContent += `${aptNo},${resName},${phone},"---","---","Kayıt Yok"\n`;
+          } else {
+            payments.forEach(pay => {
+              const period = `"${pay.period || ''}"`;
+              const amount = `"${pay.amount || 0}"`;
+              const status = `"${pay.status || 'Ödenmedi'}"`;
+              csvContent += `${aptNo},${resName},${phone},${period},${amount},${status}\n`;
+            });
+          }
+        }
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `${tenantName}_Daire_ve_Aidat_Listesi.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
       } catch (err) {
-        console.error('Ödeme eklenirken ağ/sunucu hatası:', err);
+        console.error('CSV indirme hatası:', err);
+        alert('Excel dosyası oluşturulurken bir hata oluştu.');
       }
     }
   </script>
