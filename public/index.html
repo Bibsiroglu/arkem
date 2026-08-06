@@ -566,53 +566,55 @@
       });
     }
 
-    // Yeni Aidat / Borç Ekle
+    // Yeni Aidat / Borç Ekleme Fonksiyonu (Düzeltilmiş)
     async function handleAddPayment(e) {
       e.preventDefault();
       const apartmentId = document.getElementById('activeApartmentId').value;
-      const amount = document.getElementById('payAmount').value;
-      const month = document.getElementById('payMonth').value;
+      const rawAmount = document.getElementById('payAmount').value;
+      const rawMonth = document.getElementById('payMonth').value; // Örn: "2026-08"
+
+      // 1. Tutar doğrulaması ve sayıya çevirme
+      const amount = parseFloat(rawAmount);
+      if (isNaN(amount) || amount <= 0) {
+        alert("Lütfen geçerli bir tutar girin.");
+        return;
+      }
+
+      // 2. Ay verisini formatlama (Gerekirse "2026-08-01" gibi tam tarih yapıyoruz)
+      // Backend string ("2026-08") mi yoksa tam tarih mi bekliyor kontrolü için:
+      const monthFormatted = rawMonth.length === 7 ? `${rawMonth}-01` : rawMonth;
+
+      const payload = {
+        amount: amount,                 // Number olarak gönderiyoruz
+        month: rawMonth,                // veya monthFormatted (Backend yapına göre)
+        status: 'Ödenmedi'
+      };
 
       try {
         const res = await fetch(`/api/apartments/${apartmentId}/payments`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount, month, status: 'Ödenmedi' })
+          body: JSON.stringify(payload)
         });
 
-        if (res.ok) {
-          document.getElementById('payAmount').value = '';
-          loadPayments(apartmentId);
-          
-          // Arka plandaki borçları ve üst sayaçları güncelle
-          const tenantId = document.getElementById('activeTenantId').value;
-          if (tenantId) loadApartments(tenantId);
-          loadTenants();
+        if (!res.ok) {
+          // Backend'den gelen spesifik hata mesajını yakalayalım
+          const errorData = await res.json().catch(() => ({}));
+          console.error('Backend Hata Detayı:', errorData);
+          alert(`Hata (${res.status}): ${errorData.message || errorData.error || 'İşlem başarısız.'}`);
+          return;
         }
+
+        // Başarılıysa formu temizle ve güncel verileri yükle
+        document.getElementById('payAmount').value = '';
+        loadPayments(apartmentId);
+        
+        const tenantId = document.getElementById('activeTenantId').value;
+        if (tenantId) loadApartments(tenantId);
+        loadTenants();
+
       } catch (err) {
-        console.error('Ödeme eklenirken hata:', err);
-      }
-    }
-
-    // Ödendi / Ödenmedi Durumu Değiştirme
-    async function togglePaymentStatus(paymentId, newStatus) {
-      try {
-        const res = await fetch(`/api/payments/${paymentId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: newStatus })
-        });
-
-        if (res.ok) {
-          const apartmentId = document.getElementById('activeApartmentId').value;
-          loadPayments(apartmentId);
-
-          const tenantId = document.getElementById('activeTenantId').value;
-          if (tenantId) loadApartments(tenantId);
-          loadTenants();
-        }
-      } catch (err) {
-        console.error('Ödeme durumu değiştirilemedi:', err);
+        console.error('Ödeme eklenirken ağ/sunucu hatası:', err);
       }
     }
   </script>
